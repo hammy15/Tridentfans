@@ -24,6 +24,38 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ categories: categories || [] });
     }
 
+    if (type === 'game-threads') {
+      // Fetch recent game threads
+      const { data: threads, error } = await supabase
+        .from('forum_posts')
+        .select('id, title, mlb_game_id, created_at, is_pinned')
+        .eq('is_game_thread', true)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+
+      // Get comment counts for threads
+      const threadIds = threads?.map(t => t.id) || [];
+      if (threadIds.length > 0) {
+        const { data: counts } = await supabase
+          .from('forum_comments')
+          .select('post_id')
+          .in('post_id', threadIds);
+
+        const countMap: Record<string, number> = {};
+        counts?.forEach(c => {
+          countMap[c.post_id] = (countMap[c.post_id] || 0) + 1;
+        });
+
+        threads?.forEach(t => {
+          (t as Record<string, unknown>).comment_count = countMap[t.id] || 0;
+        });
+      }
+
+      return NextResponse.json({ threads: threads || [] });
+    }
+
     if (type === 'posts') {
       let query = supabase
         .from('forum_posts')

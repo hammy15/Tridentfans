@@ -20,6 +20,7 @@ import {
   LogIn,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { GameThreadBanner } from '@/components/forum/GameThreadBanner';
 import type { ForumCategory, ForumPost } from '@/types';
 
 // Mock data for when database is empty
@@ -248,6 +249,9 @@ export default function ForumPage() {
           </Link>
         )}
       </div>
+
+      {/* Game Thread Banner */}
+      <GameThreadBanner />
 
       {/* New Post Modal */}
       {showNewPost && (
