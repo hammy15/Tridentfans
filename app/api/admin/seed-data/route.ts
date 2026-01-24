@@ -303,7 +303,7 @@ export async function POST(request: NextRequest) {
           opponent: opponent.name,
           opponent_abbr: opponent.abbr,
           is_home: i % 2 === 0,
-          status: 'completed',
+          status: 'final',
           actual_result: {
             mariners_score: marinersScore,
             opponent_score: opponentScore,
