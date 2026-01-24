@@ -7,6 +7,7 @@ import {
   Home,
   Trophy,
   MessageSquare,
+  MessageCircle,
   Newspaper,
   Users,
   Settings,
@@ -29,6 +30,7 @@ import {
 
 const navigation = [
   { name: 'Home', href: '/', icon: Home },
+  { name: 'Chat', href: '/bots', icon: MessageCircle },
   { name: 'Predictions', href: '/predictions', icon: Trophy },
   { name: 'Forum', href: '/forum', icon: MessageSquare },
   { name: 'News', href: '/news', icon: Newspaper },
