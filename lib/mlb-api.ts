@@ -156,11 +156,27 @@ export async function getMarinersRoster(): Promise<MLBPlayer[]> {
   const cached = getCached<MLBPlayer[]>(cacheKey);
   if (cached) return cached;
 
-  const response = await fetchMLB<{ roster: Array<{ person: MLBPlayer }> }>(
-    `/teams/${MARINERS_TEAM_ID}/roster?rosterType=active`
-  );
+  const response = await fetchMLB<{
+    roster: Array<{
+      person: { id: number; fullName: string; link: string };
+      jerseyNumber?: string;
+      position: { abbreviation: string; name: string };
+      status?: { code: string };
+    }>;
+  }>(`/teams/${MARINERS_TEAM_ID}/roster?rosterType=40Man`);
 
-  const players = response.roster.map(r => r.person);
+  const players: MLBPlayer[] = response.roster.map(r => ({
+    id: r.person.id,
+    fullName: r.person.fullName,
+    primaryNumber: r.jerseyNumber,
+    primaryPosition: {
+      abbreviation: r.position?.abbreviation || 'P',
+      name: r.position?.name || 'Player',
+    },
+    batSide: { code: 'R' },
+    pitchHand: { code: 'R' },
+  }));
+
   return setCache(cacheKey, players, CACHE_TTL.ROSTER);
 }
 
