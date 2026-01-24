@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { supabase } from '@/lib/supabase';
+import { generateBotContext } from '@/lib/mariners-history';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
+
+// Cache the historical context (regenerated on server restart)
+const marinersKnowledge = generateBotContext();
 
 // Store conversation for learning (non-blocking)
 async function storeConversation(
@@ -132,10 +136,17 @@ export async function POST(request: NextRequest) {
       content: msg.content,
     }));
 
+    // Combine bot personality with comprehensive Mariners knowledge
+    const fullSystemPrompt = `${systemPrompt}
+
+${marinersKnowledge}
+
+IMPORTANT: Use this knowledge base to provide accurate, detailed answers about the Mariners. Reference specific stats, dates, and facts when relevant. Keep responses conversational (2-3 paragraphs max unless asked for more detail).`;
+
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 1024,
-      system: systemPrompt,
+      system: fullSystemPrompt,
       messages: formattedMessages,
     });
 

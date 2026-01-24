@@ -20,6 +20,9 @@ import {
   User,
   ToggleLeft,
   ToggleRight,
+  Database,
+  CheckCircle,
+  Loader2,
 } from 'lucide-react';
 import { DEFAULT_BOT_CONFIGS, BOT_PRESETS } from '@/lib/ai-bots';
 import type { BotId, BotTraits } from '@/types';
@@ -315,6 +318,138 @@ function BotConfigPanel({ botId }: { botId: BotId }) {
   );
 }
 
+// Knowledge Base Panel for seeding Mariners history
+function KnowledgeBasePanel({ adminPassword }: { adminPassword: string }) {
+  const [historyStatus, setHistoryStatus] = useState<{
+    loaded: boolean;
+    count: number;
+    categories: string[];
+  } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSeeding, setIsSeeding] = useState(false);
+  const [seedResult, setSeedResult] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/admin/seed-history')
+      .then(res => res.json())
+      .then(data => {
+        setHistoryStatus(data);
+        setIsLoading(false);
+      })
+      .catch(() => setIsLoading(false));
+  }, []);
+
+  const handleSeedHistory = async () => {
+    setIsSeeding(true);
+    setSeedResult(null);
+
+    try {
+      const res = await fetch('/api/admin/seed-history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: adminPassword }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        setSeedResult(`Successfully loaded ${data.categories.length} categories of Mariners history!`);
+        // Refresh status
+        const statusRes = await fetch('/api/admin/seed-history');
+        const statusData = await statusRes.json();
+        setHistoryStatus(statusData);
+      } else {
+        setSeedResult('Failed to seed history: ' + (data.error || 'Unknown error'));
+      }
+    } catch {
+      setSeedResult('Failed to seed history');
+    }
+
+    setIsSeeding(false);
+  };
+
+  return (
+    <Card className="mb-6">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Database className="h-5 w-5" />
+          Knowledge Base
+        </CardTitle>
+        <CardDescription>
+          Historical Mariners data injected into all bot conversations for accurate, detailed responses.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Checking knowledge base status...
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              {historyStatus?.loaded ? (
+                <>
+                  <CheckCircle className="h-5 w-5 text-green-500" />
+                  <span className="text-green-600 font-medium">
+                    Knowledge base loaded ({historyStatus.count} categories)
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Database className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-muted-foreground">Knowledge base not loaded</span>
+                </>
+              )}
+            </div>
+
+            {historyStatus?.categories && historyStatus.categories.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {historyStatus.categories.map(cat => (
+                  <span
+                    key={cat}
+                    className="px-2 py-1 bg-muted rounded text-xs"
+                  >
+                    {cat.replace(/_/g, ' ')}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <div className="flex items-center gap-4">
+              <Button
+                variant="mariners"
+                onClick={handleSeedHistory}
+                disabled={isSeeding}
+              >
+                {isSeeding ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Loading History...
+                  </>
+                ) : (
+                  <>
+                    <Database className="mr-2 h-4 w-4" />
+                    {historyStatus?.loaded ? 'Reload Knowledge Base' : 'Load Knowledge Base'}
+                  </>
+                )}
+              </Button>
+              <p className="text-sm text-muted-foreground">
+                Loads franchise history, player records, notable moments, and more.
+              </p>
+            </div>
+
+            {seedResult && (
+              <p className={`text-sm ${seedResult.includes('Successfully') ? 'text-green-600' : 'text-red-500'}`}>
+                {seedResult}
+              </p>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
@@ -508,6 +643,10 @@ export default function AdminPage() {
                 </CardDescription>
               </CardHeader>
             </Card>
+
+            {/* Knowledge Base Section */}
+            <KnowledgeBasePanel adminPassword={adminPassword} />
+
             <BotConfigPanel botId="moose" />
           </div>
         </TabsContent>
