@@ -3,12 +3,20 @@
   "framework": "nextjs",
   "crons": [
     {
+      "path": "/api/cron/sync-games",
+      "schedule": "0 8 * * *"
+    },
+    {
       "path": "/api/cron/game-threads",
       "schedule": "0 15 * * *"
     },
     {
       "path": "/api/cron/bot-predictions",
       "schedule": "0 16 * * *"
+    },
+    {
+      "path": "/api/cron/score-predictions",
+      "schedule": "0 6 * * *"
     }
   ]
 }

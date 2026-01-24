@@ -10,8 +10,25 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase-auth';
-import { Loader2, Trophy, MessageSquare, Calendar, Save, User, Award } from 'lucide-react';
+import { Loader2, Trophy, MessageSquare, Calendar, Save, Target, Award, TrendingUp } from 'lucide-react';
 import { BadgeShowcase } from '@/components/badges/UserBadges';
+
+interface ProfileStats {
+  posts: number;
+  comments: number;
+  predictions: number;
+  accuracy: number;
+  leaderboardRank: number | null;
+  leaderboardPoints: number;
+  badges: number;
+  totalDonated: number;
+  conversations: number;
+}
+
+interface RecentActivity {
+  posts: Array<{ id: string; title: string; created_at: string }>;
+  predictions: Array<{ id: string; game: { opponent: string; game_date: string } | null; score: number | null; submitted_at: string }>;
+}
 
 export default function ProfilePage() {
   const { user, profile, loading, refreshProfile } = useAuth();
@@ -20,6 +37,9 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
+  const [stats, setStats] = useState<ProfileStats | null>(null);
+  const [recentActivity, setRecentActivity] = useState<RecentActivity | null>(null);
+  const [loadingStats, setLoadingStats] = useState(true);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -33,6 +53,30 @@ export default function ProfilePage() {
       setBio(profile.bio || '');
     }
   }, [profile]);
+
+  useEffect(() => {
+    async function fetchStats() {
+      if (!user) return;
+      try {
+        const res = await fetch(`/api/profile/stats?userId=${user.id}`);
+        const data = await res.json();
+        if (data.stats) {
+          setStats(data.stats);
+          setRecentActivity(data.recentActivity);
+        }
+        // Also check for new badges
+        await fetch('/api/badges', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id }),
+        });
+      } catch (error) {
+        console.error('Failed to fetch stats:', error);
+      }
+      setLoadingStats(false);
+    }
+    if (user) fetchStats();
+  }, [user]);
 
   const handleSave = async () => {
     if (!user) return;
@@ -158,7 +202,7 @@ export default function ProfilePage() {
         </Card>
 
         {/* Stats */}
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-4">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -167,7 +211,7 @@ export default function ProfilePage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
+              <div className="text-2xl font-bold">{loadingStats ? '-' : stats?.predictions || 0}</div>
               <p className="text-xs text-muted-foreground">Total predictions made</p>
             </CardContent>
           </Card>
@@ -175,26 +219,41 @@ export default function ProfilePage() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" />
-                Forum Posts
+                <Target className="h-4 w-4" />
+                Accuracy
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">Total posts</p>
+              <div className="text-2xl font-bold">{loadingStats ? '-' : `${stats?.accuracy || 0}%`}</div>
+              <p className="text-xs text-muted-foreground">Prediction accuracy</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <User className="h-4 w-4" />
-                Accuracy
+                <MessageSquare className="h-4 w-4" />
+                Forum Activity
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">--%</div>
-              <p className="text-xs text-muted-foreground">Prediction accuracy</p>
+              <div className="text-2xl font-bold">{loadingStats ? '-' : (stats?.posts || 0) + (stats?.comments || 0)}</div>
+              <p className="text-xs text-muted-foreground">{stats?.posts || 0} posts, {stats?.comments || 0} comments</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
+                Leaderboard
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {loadingStats ? '-' : stats?.leaderboardRank ? `#${stats.leaderboardRank}` : '--'}
+              </div>
+              <p className="text-xs text-muted-foreground">{stats?.leaderboardPoints || 0} points</p>
             </CardContent>
           </Card>
         </div>
@@ -220,12 +279,50 @@ export default function ProfilePage() {
             <CardDescription>Your latest predictions and forum activity</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-8 text-muted-foreground">
-              <p>No recent activity yet.</p>
-              <p className="text-sm mt-2">
-                Start by making a prediction or joining a forum discussion!
-              </p>
-            </div>
+            {loadingStats ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-mariners-teal" />
+              </div>
+            ) : (recentActivity?.posts?.length || 0) + (recentActivity?.predictions?.length || 0) > 0 ? (
+              <div className="space-y-4">
+                {recentActivity?.predictions?.map(pred => (
+                  <div key={pred.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                    <div className="flex items-center gap-3">
+                      <Trophy className="h-4 w-4 text-mariners-teal" />
+                      <div>
+                        <p className="font-medium">Prediction: vs {pred.game?.opponent || 'Unknown'}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(pred.submitted_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    {pred.score !== null && (
+                      <Badge variant={pred.score >= 10 ? 'default' : 'secondary'}>
+                        {pred.score} pts
+                      </Badge>
+                    )}
+                  </div>
+                ))}
+                {recentActivity?.posts?.map(post => (
+                  <div key={post.id} className="flex items-center gap-3 py-2 border-b last:border-0">
+                    <MessageSquare className="h-4 w-4 text-blue-500" />
+                    <div>
+                      <p className="font-medium">{post.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(post.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>No recent activity yet.</p>
+                <p className="text-sm mt-2">
+                  Start by making a prediction or joining a forum discussion!
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -1,66 +1,44 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Trophy, MessageSquare, TrendingUp, Calendar, ChevronRight, Sparkles } from 'lucide-react';
+import { Trophy, MessageSquare, TrendingUp, Calendar, ChevronRight, Sparkles, Loader2 } from 'lucide-react';
 import { LiveGameBanner } from '@/components/live/LiveGameBanner';
 
-// Mock data - in production this would come from APIs/database
-const mockUpcomingGames = [
-  {
-    id: 1,
-    opponent: 'Los Angeles Angels',
-    opponentAbbr: 'LAA',
-    date: '2026-01-25',
-    time: '7:10 PM PT',
-    isHome: true,
-  },
-  {
-    id: 2,
-    opponent: 'Texas Rangers',
-    opponentAbbr: 'TEX',
-    date: '2026-01-27',
-    time: '6:40 PM PT',
-    isHome: false,
-  },
-  {
-    id: 3,
-    opponent: 'Houston Astros',
-    opponentAbbr: 'HOU',
-    date: '2026-01-30',
-    time: '7:10 PM PT',
-    isHome: true,
-  },
-];
+interface UpcomingGame {
+  gamePk: number;
+  opponent: string;
+  opponentAbbr: string;
+  date: Date;
+  isHome: boolean;
+  venue: string;
+}
 
-const mockLeaderboard = [
-  { rank: 1, username: 'SeattleSogKing', points: 1245, accuracy: 68 },
-  { rank: 2, username: 'JulioFan2024', points: 1189, accuracy: 65 },
-  { rank: 3, username: 'TrueToTheBlue', points: 1156, accuracy: 64 },
-  { rank: 4, username: 'RefuseToLose', points: 1098, accuracy: 62 },
-  { rank: 5, username: 'MarinersFor Life', points: 1045, accuracy: 60 },
-];
+interface LeaderboardEntry {
+  rank: number;
+  user_id: string;
+  total_points: number;
+  accuracy: number;
+  user?: { username: string; display_name: string | null };
+}
 
-const mockHotTopics = [
-  {
-    id: 1,
-    title: 'Julio Rodriguez extension discussion',
-    replies: 89,
-    category: 'Trade Talk',
-  },
-  {
-    id: 2,
-    title: 'Game Day Thread: Mariners @ Angels',
-    replies: 234,
-    category: 'Game Day',
-  },
-  {
-    id: 3,
-    title: 'Spring Training predictions 2026',
-    replies: 45,
-    category: 'General',
-  },
-];
+interface ForumPost {
+  id: string;
+  title: string;
+  upvotes: number;
+  comment_count: number;
+  category?: { name: string };
+}
+
+interface Standings {
+  team: { name: string };
+  wins: number;
+  losses: number;
+  gamesBack: string;
+}
 
 // Marty Moose is our site manager (AI)
 const siteManager = {
@@ -93,6 +71,50 @@ const founders = [
 ];
 
 export default function HomePage() {
+  const [upcomingGames, setUpcomingGames] = useState<UpcomingGame[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [hotTopics, setHotTopics] = useState<ForumPost[]>([]);
+  const [standings, setStandings] = useState<Standings | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        // Fetch all data in parallel
+        const [gamesRes, leaderboardRes, forumRes, standingsRes] = await Promise.all([
+          fetch('/api/mlb?type=upcoming&days=7'),
+          fetch('/api/predictions?type=leaderboard'),
+          fetch('/api/forum?limit=3&sort=hot'),
+          fetch('/api/mlb?type=standings'),
+        ]);
+
+        const gamesData = await gamesRes.json();
+        const leaderboardData = await leaderboardRes.json();
+        const forumData = await forumRes.json();
+        const standingsData = await standingsRes.json();
+
+        if (gamesData.games) {
+          setUpcomingGames(gamesData.games.slice(0, 3));
+        }
+        if (leaderboardData.leaderboard) {
+          setLeaderboard(leaderboardData.leaderboard.slice(0, 5));
+        }
+        if (forumData.posts) {
+          setHotTopics(forumData.posts.slice(0, 3));
+        }
+        if (standingsData.standings) {
+          // Find Mariners in standings
+          const mariners = standingsData.standings.find((t: Standings) => t.team.name.includes('Mariners'));
+          setStandings(mariners || null);
+        }
+      } catch (error) {
+        console.error('Failed to fetch home data:', error);
+      }
+      setLoading(false);
+    }
+
+    fetchData();
+  }, []);
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Live Game Banner */}
@@ -156,33 +178,41 @@ export default function HomePage() {
               </Link>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {mockUpcomingGames.map(game => (
-                  <div
-                    key={game.id}
-                    className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-mariners-navy text-white font-bold">
-                        {game.opponentAbbr}
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-mariners-teal" />
+                </div>
+              ) : upcomingGames.length > 0 ? (
+                <div className="space-y-4">
+                  {upcomingGames.map(game => (
+                    <div
+                      key={game.gamePk}
+                      className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-mariners-navy text-white font-bold text-sm">
+                          {game.opponentAbbr}
+                        </div>
+                        <div>
+                          <p className="font-medium">
+                            {game.isHome ? 'vs' : '@'} {game.opponent}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {new Date(game.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium">
-                          {game.isHome ? 'vs' : '@'} {game.opponent}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {game.date} • {game.time}
-                        </p>
-                      </div>
+                      <Link href="/predictions">
+                        <Button variant="mariners" size="sm">
+                          Predict
+                        </Button>
+                      </Link>
                     </div>
-                    <Link href={`/predictions?game=${game.id}`}>
-                      <Button variant="mariners" size="sm">
-                        Predict
-                      </Button>
-                    </Link>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center py-8 text-muted-foreground">No upcoming games scheduled</p>
+              )}
             </CardContent>
           </Card>
 
@@ -204,24 +234,37 @@ export default function HomePage() {
               </Link>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {mockHotTopics.map(topic => (
-                  <Link key={topic.id} href={`/forum/post/${topic.id}`} className="block">
-                    <div className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50">
-                      <div>
-                        <p className="font-medium">{topic.title}</p>
-                        <div className="mt-1 flex items-center gap-2">
-                          <Badge variant="secondary">{topic.category}</Badge>
-                          <span className="text-sm text-muted-foreground">
-                            {topic.replies} replies
-                          </span>
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-mariners-teal" />
+                </div>
+              ) : hotTopics.length > 0 ? (
+                <div className="space-y-4">
+                  {hotTopics.map(topic => (
+                    <Link key={topic.id} href={`/forum/post/${topic.id}`} className="block">
+                      <div className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50">
+                        <div>
+                          <p className="font-medium">{topic.title}</p>
+                          <div className="mt-1 flex items-center gap-2">
+                            <Badge variant="secondary">{topic.category?.name || 'General'}</Badge>
+                            <span className="text-sm text-muted-foreground">
+                              {topic.comment_count || 0} replies
+                            </span>
+                          </div>
                         </div>
+                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
                       </div>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                    </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">No forum posts yet</p>
+                  <Link href="/forum" className="mt-2 inline-block">
+                    <Button variant="outline" size="sm">Start a discussion</Button>
                   </Link>
-                ))}
-              </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -238,32 +281,40 @@ export default function HomePage() {
               <CardDescription>Season leaderboard</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {mockLeaderboard.map(entry => (
-                  <div key={entry.rank} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
-                          entry.rank === 1
-                            ? 'bg-yellow-500 text-white'
-                            : entry.rank === 2
-                              ? 'bg-gray-400 text-white'
-                              : entry.rank === 3
-                                ? 'bg-amber-700 text-white'
-                                : 'bg-muted'
-                        }`}
-                      >
-                        {entry.rank}
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-mariners-teal" />
+                </div>
+              ) : leaderboard.length > 0 ? (
+                <div className="space-y-3">
+                  {leaderboard.map((entry, index) => (
+                    <div key={entry.user_id} className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
+                            index === 0
+                              ? 'bg-yellow-500 text-white'
+                              : index === 1
+                                ? 'bg-gray-400 text-white'
+                                : index === 2
+                                  ? 'bg-amber-700 text-white'
+                                  : 'bg-muted'
+                          }`}
+                        >
+                          {index + 1}
+                        </div>
+                        <div>
+                          <p className="font-medium">{entry.user?.display_name || entry.user?.username || 'Anonymous'}</p>
+                          <p className="text-xs text-muted-foreground">{entry.accuracy}% accuracy</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium">{entry.username}</p>
-                        <p className="text-xs text-muted-foreground">{entry.accuracy}% accuracy</p>
-                      </div>
+                      <span className="font-semibold text-mariners-teal">{entry.total_points}</span>
                     </div>
-                    <span className="font-semibold text-mariners-teal">{entry.points}</span>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center py-8 text-muted-foreground">No predictions yet. Be the first!</p>
+              )}
               <Link href="/predictions?tab=leaderboard" className="block mt-4">
                 <Button variant="outline" className="w-full">
                   View Full Leaderboard
@@ -337,23 +388,23 @@ export default function HomePage() {
             <CardContent>
               <div className="grid grid-cols-2 gap-4">
                 <div className="text-center">
-                  <p className="text-3xl font-bold">--</p>
+                  <p className="text-3xl font-bold">{standings?.wins ?? '--'}</p>
                   <p className="text-sm text-white/70">Wins</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-3xl font-bold">--</p>
+                  <p className="text-3xl font-bold">{standings?.losses ?? '--'}</p>
                   <p className="text-sm text-white/70">Losses</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-3xl font-bold">--</p>
+                  <p className="text-3xl font-bold">{standings ? (standings.gamesBack === '-' ? '1st' : `${standings.gamesBack} GB`) : '--'}</p>
                   <p className="text-sm text-white/70">AL West</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-3xl font-bold">--</p>
-                  <p className="text-sm text-white/70">GB</p>
+                  <p className="text-3xl font-bold">{standings ? `${((standings.wins / (standings.wins + standings.losses)) * 100).toFixed(0)}%` : '--'}</p>
+                  <p className="text-sm text-white/70">Win %</p>
                 </div>
               </div>
-              <p className="mt-4 text-center text-sm text-white/70">Season starts in Spring 2026</p>
+              {!standings && <p className="mt-4 text-center text-sm text-white/70">Season starts in Spring 2026</p>}
             </CardContent>
           </Card>
         </div>
