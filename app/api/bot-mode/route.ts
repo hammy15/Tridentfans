@@ -51,7 +51,10 @@ export async function POST(request: NextRequest) {
 
     // Only captain_hammy and spartan can have bot mode toggled
     if (id !== 'captain_hammy' && id !== 'spartan') {
-      return NextResponse.json({ error: 'Cannot toggle bot mode for this personality' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Cannot toggle bot mode for this personality' },
+        { status: 400 }
+      );
     }
 
     const { error } = await supabase

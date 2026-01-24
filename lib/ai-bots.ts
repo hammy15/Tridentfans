@@ -53,7 +53,14 @@ VOICE:
       debate_style: 'collaborative',
       confidence: 8,
     },
-    knowledge_focus: ['mariners_history', 'mlb_rules', 'player_stats', 'game_strategy', 'trivia', 'site_help'],
+    knowledge_focus: [
+      'mariners_history',
+      'mlb_rules',
+      'player_stats',
+      'game_strategy',
+      'trivia',
+      'site_help',
+    ],
     is_active: true,
   },
 

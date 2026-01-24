@@ -1,0 +1,21 @@
+{
+  "name": "TridentFans - Seattle Mariners Fan Community",
+  "short_name": "TridentFans",
+  "description": "The ultimate Seattle Mariners fan community",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F8FAFB",
+  "theme_color": "#0C2C56",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

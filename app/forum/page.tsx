@@ -1,96 +1,224 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar } from '@/components/ui/avatar';
-import { MessageSquare, ThumbsUp, Clock, Plus, Search, TrendingUp, X } from 'lucide-react';
+import {
+  MessageSquare,
+  ThumbsUp,
+  Clock,
+  Plus,
+  Search,
+  TrendingUp,
+  X,
+  Loader2,
+  LogIn,
+} from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import type { ForumCategory, ForumPost } from '@/types';
 
-// Mock data
+// Mock data for when database is empty
 const mockCategories = [
-  { id: 'game-day', name: 'Game Day', icon: '🏟️', postCount: 156 },
-  { id: 'general', name: 'General Discussion', icon: '💬', postCount: 423 },
-  { id: 'trade-talk', name: 'Trade Talk', icon: '🔄', postCount: 89 },
-  { id: 'roster', name: 'Roster Analysis', icon: '📊', postCount: 67 },
-  { id: 'stadium', name: 'Stadium & Tickets', icon: '🎟️', postCount: 34 },
-  { id: 'off-topic', name: 'Off Topic', icon: '🎮', postCount: 112 },
+  {
+    id: 'game-day',
+    name: 'Game Day',
+    slug: 'game-day',
+    icon: '🏟️',
+    description: '',
+    sort_order: 1,
+  },
+  {
+    id: 'general',
+    name: 'General Discussion',
+    slug: 'general',
+    icon: '💬',
+    description: '',
+    sort_order: 2,
+  },
+  {
+    id: 'trade-talk',
+    name: 'Trade Talk',
+    slug: 'trade-talk',
+    icon: '🔄',
+    description: '',
+    sort_order: 3,
+  },
+  {
+    id: 'roster',
+    name: 'Roster Analysis',
+    slug: 'roster',
+    icon: '📊',
+    description: '',
+    sort_order: 4,
+  },
+  {
+    id: 'stadium',
+    name: 'Stadium & Tickets',
+    slug: 'stadium',
+    icon: '🎟️',
+    description: '',
+    sort_order: 5,
+  },
+  {
+    id: 'off-topic',
+    name: 'Off Topic',
+    slug: 'off-topic',
+    icon: '🎮',
+    description: '',
+    sort_order: 6,
+  },
 ];
 
 const mockPosts = [
   {
-    id: '1',
+    id: 'mock-1',
     title: 'Game Day Thread: Mariners vs Angels - Jan 25',
-    content:
-      "Let's go! First game of the series. What are your predictions? I'm feeling a big game from Julio today.",
-    author: { name: 'SeattleSogKing', avatar: null },
-    category: 'game-day',
-    categoryName: 'Game Day',
+    content: "Let's go! First game of the series. What are your predictions?",
+    author: { username: 'SeattleSogKing' },
+    category: { name: 'Game Day', slug: 'game-day', icon: '🏟️' },
     upvotes: 45,
-    replies: 234,
-    createdAt: '2 hours ago',
-    isPinned: true,
+    comment_count: 234,
+    created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
   },
   {
-    id: '2',
+    id: 'mock-2',
     title: 'Julio Rodriguez extension discussion',
-    content:
-      "With Julio's performance this season, what do you think a fair extension looks like? 10 years? 12 years?",
-    author: { name: 'JulioFan2024', avatar: null },
-    category: 'trade-talk',
-    categoryName: 'Trade Talk',
+    content: "With Julio's performance this season, what do you think a fair extension looks like?",
+    author: { username: 'JulioFan2024' },
+    category: { name: 'Trade Talk', slug: 'trade-talk', icon: '🔄' },
     upvotes: 89,
-    replies: 67,
-    createdAt: '5 hours ago',
-    isPinned: false,
+    comment_count: 67,
+    created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
   },
   {
-    id: '3',
+    id: 'mock-3',
     title: 'Best food spots at T-Mobile Park?',
-    content:
-      'Taking my dad to his first game next month. What are the must-try food spots at the stadium?',
-    author: { name: 'NewFan2026', avatar: null },
-    category: 'stadium',
-    categoryName: 'Stadium & Tickets',
+    content: 'Taking my dad to his first game next month. What are the must-try food spots?',
+    author: { username: 'NewFan2026' },
+    category: { name: 'Stadium & Tickets', slug: 'stadium', icon: '🎟️' },
     upvotes: 23,
-    replies: 45,
-    createdAt: '1 day ago',
-    isPinned: false,
+    comment_count: 45,
+    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
   },
   {
-    id: '4',
+    id: 'mock-4',
     title: 'George Kirby appreciation thread',
     content: 'Can we just talk about how dominant Kirby has been? His control is absolutely elite.',
-    author: { name: 'TrueToTheBlue', avatar: null },
-    category: 'general',
-    categoryName: 'General Discussion',
+    author: { username: 'TrueToTheBlue' },
+    category: { name: 'General Discussion', slug: 'general', icon: '💬' },
     upvotes: 67,
-    replies: 34,
-    createdAt: '1 day ago',
-    isPinned: false,
+    comment_count: 34,
+    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
   },
 ];
 
 export default function ForumPage() {
+  const { user, loading: authLoading } = useAuth();
+  const [categories, setCategories] = useState<ForumCategory[]>([]);
+  const [posts, setPosts] = useState<ForumPost[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showNewPost, setShowNewPost] = useState(false);
   const [newPost, setNewPost] = useState({ title: '', content: '', category: '' });
 
-  const filteredPosts = mockPosts.filter(post => {
-    if (selectedCategory && post.category !== selectedCategory) return false;
+  // Fetch categories
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const res = await fetch('/api/forum?type=categories');
+        const data = await res.json();
+        if (data.categories && data.categories.length > 0) {
+          setCategories(data.categories);
+        } else {
+          setCategories(mockCategories as ForumCategory[]);
+        }
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+        setCategories(mockCategories as ForumCategory[]);
+      }
+    }
+    fetchCategories();
+  }, []);
+
+  // Fetch posts
+  useEffect(() => {
+    async function fetchPosts() {
+      setLoading(true);
+      try {
+        const url = selectedCategory
+          ? `/api/forum?type=posts&categoryId=${selectedCategory}`
+          : '/api/forum?type=posts';
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.posts && data.posts.length > 0) {
+          setPosts(data.posts);
+        } else {
+          setPosts(mockPosts as unknown as ForumPost[]);
+        }
+      } catch (error) {
+        console.error('Failed to fetch posts:', error);
+        setPosts(mockPosts as unknown as ForumPost[]);
+      }
+      setLoading(false);
+    }
+    fetchPosts();
+  }, [selectedCategory]);
+
+  const filteredPosts = posts.filter(post => {
     if (searchQuery && !post.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
   });
 
-  const handleCreatePost = () => {
-    console.log('Creating post:', newPost);
-    alert('Post created! (Demo mode)');
-    setShowNewPost(false);
-    setNewPost({ title: '', content: '', category: '' });
+  const handleCreatePost = async () => {
+    if (!user) return;
+    setSubmitting(true);
+
+    try {
+      const res = await fetch('/api/forum', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          categoryId: newPost.category,
+          title: newPost.title,
+          content: newPost.content,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.error) {
+        alert(data.error);
+      } else {
+        setPosts([data.post, ...posts]);
+        setShowNewPost(false);
+        setNewPost({ title: '', content: '', category: '' });
+      }
+    } catch (error) {
+      console.error('Failed to create post:', error);
+      alert('Failed to create post');
+    }
+    setSubmitting(false);
+  };
+
+  const formatTimeAgo = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
   };
 
   return (
@@ -106,10 +234,19 @@ export default function ForumPage() {
             Join the conversation with fellow Mariners fans
           </p>
         </div>
-        <Button variant="mariners" onClick={() => setShowNewPost(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Post
-        </Button>
+        {user ? (
+          <Button variant="mariners" onClick={() => setShowNewPost(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Post
+          </Button>
+        ) : (
+          <Link href="/auth/login">
+            <Button variant="mariners">
+              <LogIn className="mr-2 h-4 w-4" />
+              Sign in to Post
+            </Button>
+          </Link>
+        )}
       </div>
 
       {/* New Post Modal */}
@@ -133,7 +270,7 @@ export default function ForumPage() {
                   onChange={e => setNewPost({ ...newPost, category: e.target.value })}
                 >
                   <option value="">Select a category</option>
-                  {mockCategories.map(cat => (
+                  {categories.map(cat => (
                     <option key={cat.id} value={cat.id}>
                       {cat.icon} {cat.name}
                     </option>
@@ -165,9 +302,16 @@ export default function ForumPage() {
                   variant="mariners"
                   className="flex-1"
                   onClick={handleCreatePost}
-                  disabled={!newPost.title || !newPost.content || !newPost.category}
+                  disabled={!newPost.title || !newPost.content || !newPost.category || submitting}
                 >
-                  Post
+                  {submitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Posting...
+                    </>
+                  ) : (
+                    'Post'
+                  )}
                 </Button>
               </div>
             </CardContent>
@@ -191,10 +335,9 @@ export default function ForumPage() {
               >
                 <div className="flex items-center justify-between">
                   <span>All Posts</span>
-                  <span className="text-sm opacity-70">{mockPosts.length}</span>
                 </div>
               </button>
-              {mockCategories.map(cat => (
+              {categories.map(cat => (
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
@@ -202,11 +345,9 @@ export default function ForumPage() {
                     selectedCategory === cat.id ? 'bg-mariners-teal text-white' : 'hover:bg-muted'
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <span>
-                      {cat.icon} {cat.name}
-                    </span>
-                    <span className="text-sm opacity-70">{cat.postCount}</span>
+                  <div className="flex items-center gap-2">
+                    <span>{cat.icon}</span>
+                    <span>{cat.name}</span>
                   </div>
                 </button>
               ))}
@@ -252,59 +393,70 @@ export default function ForumPage() {
           </div>
 
           {/* Posts */}
-          <div className="space-y-4">
-            {filteredPosts.map(post => (
-              <Link key={post.id} href={`/forum/post/${post.id}`}>
-                <Card
-                  className={`transition-all hover:shadow-md cursor-pointer ${
-                    post.isPinned ? 'border-mariners-teal' : ''
-                  }`}
-                >
-                  <CardContent className="p-6">
-                    <div className="flex gap-4">
-                      <Avatar fallback={post.author.name.charAt(0)} className="h-10 w-10" />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            {post.isPinned && (
-                              <Badge variant="mariners" className="mb-2">
-                                📌 Pinned
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-mariners-teal" />
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredPosts.map(post => (
+                <Link key={post.id} href={`/forum/post/${post.id}`}>
+                  <Card className="transition-all hover:shadow-md cursor-pointer mb-4">
+                    <CardContent className="p-6">
+                      <div className="flex gap-4">
+                        <Avatar
+                          fallback={post.author?.username?.[0] || '?'}
+                          className="h-10 w-10"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-lg leading-tight">{post.title}</h3>
+                          <p className="mt-2 text-muted-foreground line-clamp-2">{post.content}</p>
+                          <div className="mt-4 flex flex-wrap items-center gap-4 text-sm">
+                            <span className="font-medium">
+                              {post.author?.username || 'Anonymous'}
+                            </span>
+                            {post.category && (
+                              <Badge variant="secondary">
+                                {post.category.icon} {post.category.name}
                               </Badge>
                             )}
-                            <h3 className="font-semibold text-lg leading-tight">{post.title}</h3>
-                          </div>
-                        </div>
-                        <p className="mt-2 text-muted-foreground line-clamp-2">{post.content}</p>
-                        <div className="mt-4 flex flex-wrap items-center gap-4 text-sm">
-                          <span className="font-medium">{post.author.name}</span>
-                          <Badge variant="secondary">{post.categoryName}</Badge>
-                          <div className="flex items-center gap-1 text-muted-foreground">
-                            <ThumbsUp className="h-4 w-4" />
-                            {post.upvotes}
-                          </div>
-                          <div className="flex items-center gap-1 text-muted-foreground">
-                            <MessageSquare className="h-4 w-4" />
-                            {post.replies}
-                          </div>
-                          <div className="flex items-center gap-1 text-muted-foreground">
-                            <Clock className="h-4 w-4" />
-                            {post.createdAt}
+                            <div className="flex items-center gap-1 text-muted-foreground">
+                              <ThumbsUp className="h-4 w-4" />
+                              {post.upvotes}
+                            </div>
+                            <div className="flex items-center gap-1 text-muted-foreground">
+                              <MessageSquare className="h-4 w-4" />
+                              {post.comment_count || 0}
+                            </div>
+                            <div className="flex items-center gap-1 text-muted-foreground">
+                              <Clock className="h-4 w-4" />
+                              {formatTimeAgo(post.created_at)}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
 
-            {filteredPosts.length === 0 && (
-              <div className="text-center py-12">
-                <MessageSquare className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <p className="text-muted-foreground">No posts found</p>
-              </div>
-            )}
-          </div>
+              {filteredPosts.length === 0 && (
+                <div className="text-center py-12">
+                  <MessageSquare className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <p className="text-muted-foreground">No posts found</p>
+                  {user && (
+                    <Button
+                      variant="mariners"
+                      className="mt-4"
+                      onClick={() => setShowNewPost(true)}
+                    >
+                      Create the first post
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

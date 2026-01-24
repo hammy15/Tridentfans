@@ -25,7 +25,7 @@ const chatConfigs = {
     name: 'Captain Hammy',
     emoji: '🧢',
     color: 'bg-mariners-navy',
-    description: 'Lifelong M\'s fan & trade analyst',
+    description: "Lifelong M's fan & trade analyst",
     isAI: false,
     role: 'Founder',
     greeting:
@@ -193,7 +193,10 @@ export default function ChatPage() {
               )}
             </h1>
             <div className="flex items-center gap-2">
-              <Badge variant={person.isAI ? 'secondary' : 'default'} className={person.isAI ? '' : 'bg-mariners-navy'}>
+              <Badge
+                variant={person.isAI ? 'secondary' : 'default'}
+                className={person.isAI ? '' : 'bg-mariners-navy'}
+              >
                 {person.role}
               </Badge>
               <span className="text-muted-foreground text-sm">{person.description}</span>
@@ -201,7 +204,6 @@ export default function ChatPage() {
           </div>
         </div>
       </div>
-
 
       {/* Chat Container */}
       <Card className="h-[calc(100vh-350px)] min-h-[400px] flex flex-col">

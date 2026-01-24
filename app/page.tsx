@@ -78,7 +78,7 @@ const founders = [
     name: 'Captain Hammy',
     emoji: '🧢',
     role: 'Founder',
-    description: 'Lifelong M\'s fan & trade analyst',
+    description: "Lifelong M's fan & trade analyst",
     color: 'bg-mariners-navy',
   },
   {
@@ -100,8 +100,8 @@ export default function HomePage() {
           <div className="relative z-10">
             <h1 className="text-3xl font-bold md:text-5xl">Welcome to TridentFans</h1>
             <p className="mt-4 max-w-2xl text-lg text-white/90 md:text-xl">
-              The ultimate Seattle Mariners fan community. Make predictions, join discussions,
-              and connect with fellow fans who share our passion.
+              The ultimate Seattle Mariners fan community. Make predictions, join discussions, and
+              connect with fellow fans who share our passion.
             </p>
             <div className="mt-6 flex flex-wrap gap-4">
               <Link href="/predictions">
@@ -269,9 +269,7 @@ export default function HomePage() {
           {/* Meet the Team */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                👋 Meet the Team
-              </CardTitle>
+              <CardTitle className="flex items-center gap-2">👋 Meet the Team</CardTitle>
               <CardDescription>The people behind TridentFans</CardDescription>
             </CardHeader>
             <CardContent>

@@ -1,34 +1,56 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
-import { Trophy, Calendar, CheckCircle, Clock, TrendingUp, Medal } from 'lucide-react';
+import {
+  Trophy,
+  Calendar,
+  CheckCircle,
+  Clock,
+  TrendingUp,
+  Medal,
+  Loader2,
+  LogIn,
+} from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import Link from 'next/link';
+import type { PredictionGame, UserPrediction, LeaderboardEntry } from '@/types';
 
-// Mock data
+// Mock data for when database is empty
 const mockGames = [
   {
-    id: '1',
+    id: 'mock-1',
     opponent: 'Los Angeles Angels',
-    opponentAbbr: 'LAA',
-    date: '2026-01-25',
-    time: '7:10 PM PT',
-    isHome: true,
-    status: 'upcoming',
-    predictionsClose: '2026-01-25T18:40:00',
+    opponent_abbr: 'LAA',
+    game_date: '2026-01-25',
+    game_time: '19:10',
+    is_home: true,
+    status: 'scheduled' as const,
+    actual_result: null,
   },
   {
-    id: '2',
+    id: 'mock-2',
     opponent: 'Texas Rangers',
-    opponentAbbr: 'TEX',
-    date: '2026-01-27',
-    time: '6:40 PM PT',
-    isHome: false,
-    status: 'upcoming',
-    predictionsClose: '2026-01-27T18:10:00',
+    opponent_abbr: 'TEX',
+    game_date: '2026-01-27',
+    game_time: '18:40',
+    is_home: false,
+    status: 'scheduled' as const,
+    actual_result: null,
+  },
+  {
+    id: 'mock-3',
+    opponent: 'Houston Astros',
+    opponent_abbr: 'HOU',
+    game_date: '2026-01-30',
+    game_time: '19:10',
+    is_home: true,
+    status: 'scheduled' as const,
+    actual_result: null,
   },
 ];
 
@@ -38,35 +60,15 @@ const mockLeaderboard = [
   { rank: 3, username: 'TrueToTheBlue', points: 1156, accuracy: 64, predictions: 48 },
   { rank: 4, username: 'RefuseToLose', points: 1098, accuracy: 62, predictions: 40 },
   { rank: 5, username: 'MarinersForLife', points: 1045, accuracy: 60, predictions: 38 },
-  { rank: 6, username: 'KingsDomeMem', points: 998, accuracy: 58, predictions: 35 },
-  { rank: 7, username: 'SodoMojo', points: 945, accuracy: 56, predictions: 33 },
-  { rank: 8, username: 'GriffeysKid', points: 912, accuracy: 55, predictions: 32 },
-  { rank: 9, username: 'IchiroLegend', points: 889, accuracy: 54, predictions: 31 },
-  { rank: 10, username: 'FelixForever', points: 856, accuracy: 53, predictions: 30 },
-];
-
-const mockHistory = [
-  {
-    id: 'h1',
-    game: 'vs Angels',
-    date: '2026-01-20',
-    prediction: { winner: 'mariners', runs: 5 },
-    actual: { winner: 'mariners', marinersRuns: 6, opponentRuns: 3 },
-    points: 25,
-    correct: true,
-  },
-  {
-    id: 'h2',
-    game: '@ Astros',
-    date: '2026-01-18',
-    prediction: { winner: 'mariners', runs: 4 },
-    actual: { winner: 'opponent', marinersRuns: 2, opponentRuns: 5 },
-    points: 5,
-    correct: false,
-  },
 ];
 
 export default function PredictionsPage() {
+  const { user, profile, loading: authLoading } = useAuth();
+  const [games, setGames] = useState<PredictionGame[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [history, setHistory] = useState<UserPrediction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
   const [predictions, setPredictions] = useState({
     winner: '' as 'mariners' | 'opponent' | '',
@@ -74,12 +76,118 @@ export default function PredictionsPage() {
     opponentRuns: '',
   });
 
-  const handleSubmit = () => {
-    console.log('Submitting prediction:', { game: selectedGame, ...predictions });
-    alert('Prediction submitted! (Demo mode)');
-    setSelectedGame(null);
-    setPredictions({ winner: '', marinersRuns: '', opponentRuns: '' });
+  // Fetch games
+  useEffect(() => {
+    async function fetchGames() {
+      try {
+        const res = await fetch('/api/predictions?type=games');
+        const data = await res.json();
+        if (data.games && data.games.length > 0) {
+          setGames(data.games);
+        } else {
+          // Use mock data if no games in database
+          setGames(mockGames as PredictionGame[]);
+        }
+      } catch (error) {
+        console.error('Failed to fetch games:', error);
+        setGames(mockGames as PredictionGame[]);
+      }
+    }
+    fetchGames();
+  }, []);
+
+  // Fetch leaderboard
+  useEffect(() => {
+    async function fetchLeaderboard() {
+      try {
+        const res = await fetch('/api/predictions?type=leaderboard');
+        const data = await res.json();
+        setLeaderboard(data.leaderboard || []);
+      } catch (error) {
+        console.error('Failed to fetch leaderboard:', error);
+      }
+      setLoading(false);
+    }
+    fetchLeaderboard();
+  }, []);
+
+  // Fetch history when user is logged in
+  useEffect(() => {
+    async function fetchHistory() {
+      if (!user) return;
+      try {
+        const res = await fetch(`/api/predictions?type=history&userId=${user.id}`);
+        const data = await res.json();
+        setHistory(data.history || []);
+      } catch (error) {
+        console.error('Failed to fetch history:', error);
+      }
+    }
+    fetchHistory();
+  }, [user]);
+
+  const handleSubmit = async () => {
+    if (!user || !selectedGame) return;
+
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/predictions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          gameId: selectedGame,
+          predictions: {
+            winner: predictions.winner,
+            mariners_runs: parseInt(predictions.marinersRuns),
+            opponent_runs: parseInt(predictions.opponentRuns),
+          },
+        }),
+      });
+
+      const data = await res.json();
+      if (data.error) {
+        alert(data.error);
+      } else {
+        alert('Prediction submitted successfully!');
+        setSelectedGame(null);
+        setPredictions({ winner: '', marinersRuns: '', opponentRuns: '' });
+        // Refresh history
+        const histRes = await fetch(`/api/predictions?type=history&userId=${user.id}`);
+        const histData = await histRes.json();
+        setHistory(histData.history || []);
+      }
+    } catch (error) {
+      console.error('Failed to submit prediction:', error);
+      alert('Failed to submit prediction');
+    }
+    setSubmitting(false);
   };
+
+  const formatTime = (time: string) => {
+    const [hours, minutes] = time.split(':');
+    const h = parseInt(hours);
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const hour12 = h % 12 || 12;
+    return `${hour12}:${minutes} ${ampm} PT`;
+  };
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr + 'T00:00:00');
+    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  };
+
+  // Use mock leaderboard if database is empty
+  const displayLeaderboard =
+    leaderboard.length > 0
+      ? leaderboard.map((e, i) => ({
+          rank: e.rank || i + 1,
+          username: e.user?.username || 'Anonymous',
+          points: e.total_points,
+          accuracy: e.accuracy,
+          predictions: 0,
+        }))
+      : mockLeaderboard;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -114,44 +222,50 @@ export default function PredictionsPage() {
                 <CardDescription>Select a game to make your prediction</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {mockGames.map(game => (
-                    <div
-                      key={game.id}
-                      onClick={() => setSelectedGame(game.id)}
-                      className={`cursor-pointer rounded-lg border p-4 transition-all ${
-                        selectedGame === game.id
-                          ? 'border-mariners-teal bg-accent'
-                          : 'hover:border-mariners-teal/50 hover:bg-muted/50'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-mariners-navy text-white font-bold">
-                            {game.opponentAbbr}
+                {loading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-mariners-teal" />
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {games.map(game => (
+                      <div
+                        key={game.id}
+                        onClick={() => setSelectedGame(game.id)}
+                        className={`cursor-pointer rounded-lg border p-4 transition-all ${
+                          selectedGame === game.id
+                            ? 'border-mariners-teal bg-accent'
+                            : 'hover:border-mariners-teal/50 hover:bg-muted/50'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-mariners-navy text-white font-bold text-sm">
+                              {game.opponent_abbr}
+                            </div>
+                            <div>
+                              <p className="font-medium">
+                                {game.is_home ? 'vs' : '@'} {game.opponent}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {formatDate(game.game_date)} • {formatTime(game.game_time)}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-medium">
-                              {game.isHome ? 'vs' : '@'} {game.opponent}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {game.date} • {game.time}
-                            </p>
-                          </div>
+                          <Badge variant="secondary">
+                            <Clock className="mr-1 h-3 w-3" />
+                            Open
+                          </Badge>
                         </div>
-                        <Badge variant="secondary">
-                          <Clock className="mr-1 h-3 w-3" />
-                          Open
-                        </Badge>
                       </div>
-                    </div>
-                  ))}
-                  {mockGames.length === 0 && (
-                    <p className="text-center text-muted-foreground py-8">
-                      No upcoming games available for predictions
-                    </p>
-                  )}
-                </div>
+                    ))}
+                    {games.length === 0 && (
+                      <p className="text-center text-muted-foreground py-8">
+                        No upcoming games available for predictions
+                      </p>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -166,7 +280,15 @@ export default function PredictionsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {selectedGame ? (
+                {!authLoading && !user ? (
+                  <div className="text-center py-12">
+                    <LogIn className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-muted-foreground mb-4">Sign in to make predictions</p>
+                    <Link href="/auth/login">
+                      <Button variant="mariners">Sign In</Button>
+                    </Link>
+                  </div>
+                ) : selectedGame ? (
                   <div className="space-y-6">
                     {/* Winner Selection */}
                     <div>
@@ -192,7 +314,7 @@ export default function PredictionsPage() {
                           }`}
                         >
                           <div className="text-2xl mb-1">
-                            {mockGames.find(g => g.id === selectedGame)?.opponentAbbr || 'OPP'}
+                            {games.find(g => g.id === selectedGame)?.opponent_abbr || 'OPP'}
                           </div>
                           <p className="font-medium">Opponent</p>
                         </button>
@@ -249,11 +371,19 @@ export default function PredictionsPage() {
                       disabled={
                         !predictions.winner ||
                         !predictions.marinersRuns ||
-                        !predictions.opponentRuns
+                        !predictions.opponentRuns ||
+                        submitting
                       }
                       onClick={handleSubmit}
                     >
-                      Submit Prediction
+                      {submitting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Submitting...
+                        </>
+                      ) : (
+                        'Submit Prediction'
+                      )}
                     </Button>
 
                     <p className="text-xs text-center text-muted-foreground">
@@ -283,7 +413,7 @@ export default function PredictionsPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {mockLeaderboard.map(entry => (
+                {displayLeaderboard.map(entry => (
                   <div
                     key={entry.rank}
                     className={`flex items-center justify-between p-4 rounded-lg ${
@@ -341,47 +471,69 @@ export default function PredictionsPage() {
               <CardDescription>Track your past predictions and scores</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {mockHistory.map(entry => (
-                  <div
-                    key={entry.id}
-                    className="flex items-center justify-between p-4 rounded-lg border"
-                  >
-                    <div className="flex items-center gap-4">
-                      {entry.correct ? (
-                        <CheckCircle className="h-6 w-6 text-green-500" />
-                      ) : (
-                        <div className="h-6 w-6 rounded-full bg-red-100 flex items-center justify-center">
-                          <span className="text-red-500 text-xs">✗</span>
+              {!user ? (
+                <div className="text-center py-12">
+                  <LogIn className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-muted-foreground mb-4">Sign in to view your history</p>
+                  <Link href="/auth/login">
+                    <Button variant="mariners">Sign In</Button>
+                  </Link>
+                </div>
+              ) : history.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  No prediction history yet. Make your first prediction!
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {history.map(entry => (
+                    <div
+                      key={entry.id}
+                      className="flex items-center justify-between p-4 rounded-lg border"
+                    >
+                      <div className="flex items-center gap-4">
+                        {entry.score !== null && entry.score >= 10 ? (
+                          <CheckCircle className="h-6 w-6 text-green-500" />
+                        ) : entry.score !== null ? (
+                          <div className="h-6 w-6 rounded-full bg-red-100 flex items-center justify-center">
+                            <span className="text-red-500 text-xs">✗</span>
+                          </div>
+                        ) : (
+                          <Clock className="h-6 w-6 text-muted-foreground" />
+                        )}
+                        <div>
+                          <p className="font-medium">
+                            {entry.game?.is_home ? 'vs' : '@'} {entry.game?.opponent}
+                          </p>
+                          <p className="text-sm text-muted-foreground">{entry.game?.game_date}</p>
                         </div>
-                      )}
-                      <div>
-                        <p className="font-medium">{entry.game}</p>
-                        <p className="text-sm text-muted-foreground">{entry.date}</p>
                       </div>
+                      <div className="text-right">
+                        <p className="text-sm">
+                          Predicted:{' '}
+                          <span className="font-medium">
+                            {entry.predictions.winner === 'mariners' ? 'Mariners' : 'Opponent'} (
+                            {entry.predictions.mariners_runs}-{entry.predictions.opponent_runs})
+                          </span>
+                        </p>
+                        {entry.game?.actual_result && (
+                          <p className="text-sm text-muted-foreground">
+                            Actual: {entry.game.actual_result.mariners_runs} -{' '}
+                            {entry.game.actual_result.opponent_runs}
+                          </p>
+                        )}
+                      </div>
+                      {entry.score !== null && (
+                        <Badge
+                          variant={entry.score >= 10 ? 'default' : 'secondary'}
+                          className="ml-4"
+                        >
+                          +{entry.score} pts
+                        </Badge>
+                      )}
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm">
-                        Predicted:{' '}
-                        <span className="font-medium">
-                          {entry.prediction.winner === 'mariners' ? 'Mariners' : 'Opponent'} win
-                        </span>
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Actual: {entry.actual.marinersRuns} - {entry.actual.opponentRuns}
-                      </p>
-                    </div>
-                    <Badge variant={entry.correct ? 'success' : 'secondary'} className="ml-4">
-                      +{entry.points} pts
-                    </Badge>
-                  </div>
-                ))}
-                {mockHistory.length === 0 && (
-                  <p className="text-center text-muted-foreground py-8">
-                    No prediction history yet. Make your first prediction!
-                  </p>
-                )}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

@@ -7,7 +7,11 @@ const anthropic = new Anthropic({
 });
 
 // Store conversation for learning (non-blocking)
-async function storeConversation(botId: string, messages: Array<{role: string; content: string}>, response: string) {
+async function storeConversation(
+  botId: string,
+  messages: Array<{ role: string; content: string }>,
+  response: string
+) {
   try {
     await supabase.from('bot_conversations').insert({
       bot_id: botId,
@@ -114,18 +118,12 @@ export async function POST(request: NextRequest) {
     const { botId, messages } = await request.json();
 
     if (!botId || !messages) {
-      return NextResponse.json(
-        { error: 'Missing botId or messages' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing botId or messages' }, { status: 400 });
     }
 
     const systemPrompt = botSystemPrompts[botId];
     if (!systemPrompt) {
-      return NextResponse.json(
-        { error: 'Invalid bot ID' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid bot ID' }, { status: 400 });
     }
 
     // Format messages for Anthropic
@@ -150,9 +148,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ response: responseText });
   } catch (error) {
     console.error('Chat API error:', error);
-    return NextResponse.json(
-      { error: 'Failed to generate response' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to generate response' }, { status: 500 });
   }
 }

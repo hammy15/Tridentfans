@@ -27,7 +27,17 @@ import type { BotId, BotTraits } from '@/types';
 const botIds: BotId[] = ['moose', 'captain_hammy', 'spartan'];
 
 // Bot mode toggle component for Hammy/Spartan
-function BotModeToggle({ personId, name, emoji, adminPassword }: { personId: string; name: string; emoji: string; adminPassword: string }) {
+function BotModeToggle({
+  personId,
+  name,
+  emoji,
+  adminPassword,
+}: {
+  personId: string;
+  name: string;
+  emoji: string;
+  adminPassword: string;
+}) {
   const [botModeEnabled, setBotModeEnabled] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -465,16 +475,17 @@ export default function AdminPage() {
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-muted-foreground">
                 <p>
-                  <strong className="text-foreground">AI Mode ON:</strong> When someone messages you,
-                  the AI responds using your personality and knowledge. Seamless - users won&apos;t know the difference.
+                  <strong className="text-foreground">AI Mode ON:</strong> When someone messages
+                  you, the AI responds using your personality and knowledge. Seamless - users
+                  won&apos;t know the difference.
                 </p>
                 <p>
                   <strong className="text-foreground">AI Mode OFF:</strong> Messages wait for your
                   personal response. Use this when you want to engage directly with fans.
                 </p>
                 <p>
-                  <strong className="text-foreground">Learning:</strong> The AI learns from your past
-                  conversations to better match your communication style over time.
+                  <strong className="text-foreground">Learning:</strong> The AI learns from your
+                  past conversations to better match your communication style over time.
                 </p>
               </CardContent>
             </Card>
@@ -491,8 +502,9 @@ export default function AdminPage() {
                   Marty Moose - Site Manager
                 </CardTitle>
                 <CardDescription>
-                  Marty is TridentFans&apos; clubhouse manager - the most knowledgeable and helpful member of the team.
-                  He&apos;s available 24/7 to help fans with anything Mariners-related.
+                  Marty is TridentFans&apos; clubhouse manager - the most knowledgeable and helpful
+                  member of the team. He&apos;s available 24/7 to help fans with anything
+                  Mariners-related.
                 </CardDescription>
               </CardHeader>
             </Card>
