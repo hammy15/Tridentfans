@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { PWAProvider } from '@/components/pwa/PWAProvider';
 import './globals.css';
 
 export const viewport: Viewport = {
@@ -72,11 +73,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className="light">
       <body className="min-h-screen bg-background font-sans antialiased">
         <AuthProvider>
-          <div className="relative flex min-h-screen flex-col">
-            <Header />
-            <main className="flex-1">{children}</main>
-            <Footer />
-          </div>
+          <PWAProvider>
+            <div className="relative flex min-h-screen flex-col">
+              <Header />
+              <main className="flex-1">{children}</main>
+              <Footer />
+            </div>
+          </PWAProvider>
         </AuthProvider>
       </body>
     </html>
