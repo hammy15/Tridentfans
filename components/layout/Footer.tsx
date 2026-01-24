@@ -58,9 +58,9 @@ export function Footer() {
                 <span>⚔️</span>
                 <span>Spartan - Co-Founder</span>
               </li>
-              <li className="flex items-center gap-2 mt-3 pt-2 border-t border-white/10">
+              <li className="flex items-center gap-2">
                 <span>🫎</span>
-                <span>Moose - AI Assistant</span>
+                <span>Marty Moose - Site Manager</span>
               </li>
             </ul>
           </div>

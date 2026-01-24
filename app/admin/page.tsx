@@ -466,31 +466,33 @@ export default function AdminPage() {
               <CardContent className="space-y-3 text-sm text-muted-foreground">
                 <p>
                   <strong className="text-foreground">AI Mode ON:</strong> When someone messages you,
-                  the AI responds using your personality and knowledge. Perfect for when you&apos;re busy.
+                  the AI responds using your personality and knowledge. Seamless - users won&apos;t know the difference.
                 </p>
                 <p>
                   <strong className="text-foreground">AI Mode OFF:</strong> Messages wait for your
                   personal response. Use this when you want to engage directly with fans.
                 </p>
                 <p>
-                  Users see a notice when AI is responding on your behalf, so they know.
+                  <strong className="text-foreground">Learning:</strong> The AI learns from your past
+                  conversations to better match your communication style over time.
                 </p>
               </CardContent>
             </Card>
           </div>
         </TabsContent>
 
-        {/* Moose AI Configuration Tab */}
+        {/* Marty Moose Configuration Tab */}
         <TabsContent value="moose">
           <div className="max-w-4xl">
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <span className="text-2xl">🫎</span>
-                  Moose - AI Assistant
+                  Marty Moose - Site Manager
                 </CardTitle>
                 <CardDescription>
-                  Moose is TridentFans&apos; 24/7 AI assistant. Configure his personality, knowledge, and responses.
+                  Marty is TridentFans&apos; clubhouse manager - the most knowledgeable and helpful member of the team.
+                  He&apos;s available 24/7 to help fans with anything Mariners-related.
                 </CardDescription>
               </CardHeader>
             </Card>

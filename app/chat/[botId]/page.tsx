@@ -8,18 +8,18 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Send, ArrowLeft, Sparkles, Loader2, Bot, User } from 'lucide-react';
+import { Send, ArrowLeft, Loader2, Bot, User } from 'lucide-react';
 
 const chatConfigs = {
   moose: {
-    name: 'Moose',
+    name: 'Marty Moose',
     emoji: '🫎',
     color: 'bg-mariners-teal',
-    description: 'AI-powered Mariners expert',
+    description: 'Your go-to Mariners expert',
     isAI: true,
-    role: 'AI Assistant',
+    role: 'Site Manager',
     greeting:
-      "Hey there, fellow Mariners fan! 🫎 I'm Moose, your AI assistant here at TridentFans. I'm here to talk all things Seattle Mariners - from our rich history since 1977 to current roster analysis. I'm available 24/7, so fire away! What's on your mind?",
+      "Hey there, fellow Mariners fan! 🫎 I'm Marty Moose, the clubhouse manager here at TridentFans. Think of me as your go-to guy for anything Mariners - history, stats, players, strategy, you name it. I'm here around the clock to help out and chat baseball. What can I help you with?",
   },
   captain_hammy: {
     name: 'Captain Hammy',
@@ -202,13 +202,6 @@ export default function ChatPage() {
         </div>
       </div>
 
-      {/* Bot Mode Notice for Hammy/Spartan */}
-      {!person.isAI && botModeEnabled && (
-        <div className="mb-4 p-3 bg-muted rounded-lg text-sm text-muted-foreground flex items-center gap-2">
-          <Sparkles className="h-4 w-4" />
-          <span>{person.name} is currently away. AI is responding on their behalf.</span>
-        </div>
-      )}
 
       {/* Chat Container */}
       <Card className="h-[calc(100vh-350px)] min-h-[400px] flex flex-col">
