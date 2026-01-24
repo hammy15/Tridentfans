@@ -78,45 +78,48 @@ export default function ChatPage() {
       timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
     setInput('');
     setIsLoading(true);
 
-    // Simulate bot response (in production, this would call the API)
-    setTimeout(() => {
-      const responses = {
-        moose: [
-          'Great question! Did you know that the Mariners hold the MLB record for most wins in a regular season with 116 in 2001? That team was absolutely incredible - Ichiro, Edgar, Bret Boone, and so many others.',
-          "That's a fascinating topic. Let me share what I know about the Mariners' history here...",
-          "Fun fact: The Mariners' first ever home run was hit by Dan Meyer on April 6, 1977. We've come a long way since then!",
-        ],
-        captain_hammy: [
-          "Here's my take on that - and I could be totally wrong - but I think the front office has been making some smart moves lately. The development of our pitching has been key.",
-          'That reminds me of a trade from a few years back... the Mariners have had some really interesting deals over the years, both good and bad.',
-          "As someone who's watched this team for decades, I've learned to temper my expectations. But this current core? They give me genuine hope.",
-        ],
-        spartan: [
-          'Let me push back on that a little. While I see your point, the data actually suggests something different when you look at it from a broader perspective.',
-          "Interesting take. But have you considered the counter-argument? Here's what the numbers tell us...",
-          'I actually have a hot take on this one. It might not be popular, but I think the evidence supports it.',
-        ],
-      };
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          botId,
+          messages: newMessages.map(m => ({ role: m.role, content: m.content })),
+        }),
+      });
 
-      const botResponses = responses[botId as keyof typeof responses] || [
-        "That's an interesting point!",
-      ];
-      const randomResponse = botResponses[Math.floor(Math.random() * botResponses.length)];
+      if (!response.ok) {
+        throw new Error('Failed to get response');
+      }
+
+      const data = await response.json();
 
       setMessages(prev => [
         ...prev,
         {
           role: 'assistant',
-          content: randomResponse,
+          content: data.response,
           timestamp: new Date(),
         },
       ]);
+    } catch (error) {
+      console.error('Chat error:', error);
+      setMessages(prev => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: "Sorry, I'm having trouble connecting right now. Please try again!",
+          timestamp: new Date(),
+        },
+      ]);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   if (!bot) {
