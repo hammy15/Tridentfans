@@ -16,6 +16,7 @@ import {
   LogIn,
   User,
   LogOut,
+  Heart,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
@@ -35,6 +36,7 @@ const navigation = [
   { name: 'Forum', href: '/forum', icon: MessageSquare },
   { name: 'News', href: '/news', icon: Newspaper },
   { name: 'Roster', href: '/roster', icon: Users },
+  { name: 'Donate', href: '/donate', icon: Heart },
 ];
 
 export function Header() {
