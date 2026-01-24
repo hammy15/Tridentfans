@@ -46,21 +46,21 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Our Bots */}
+          {/* The Team */}
           <div className="space-y-4">
-            <h4 className="font-semibold">Meet Our Bots</h4>
+            <h4 className="font-semibold">The Team</h4>
             <ul className="space-y-2 text-sm text-white/70">
               <li className="flex items-center gap-2">
-                <span>🫎</span>
-                <span>Moose - The Expert Fan</span>
-              </li>
-              <li className="flex items-center gap-2">
                 <span>🧢</span>
-                <span>Captain Hammy - The Founder</span>
+                <span>Captain Hammy - Founder</span>
               </li>
               <li className="flex items-center gap-2">
                 <span>⚔️</span>
-                <span>Spartan - The Debater</span>
+                <span>Spartan - Co-Founder</span>
+              </li>
+              <li className="flex items-center gap-2 mt-3 pt-2 border-t border-white/10">
+                <span>🫎</span>
+                <span>Moose - AI Assistant</span>
               </li>
             </ul>
           </div>

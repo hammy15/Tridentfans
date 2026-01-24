@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,11 +17,69 @@ import {
   Save,
   RefreshCw,
   Eye,
+  User,
+  ToggleLeft,
+  ToggleRight,
 } from 'lucide-react';
 import { DEFAULT_BOT_CONFIGS, BOT_PRESETS } from '@/lib/ai-bots';
 import type { BotId, BotTraits } from '@/types';
 
 const botIds: BotId[] = ['moose', 'captain_hammy', 'spartan'];
+
+// Bot mode toggle component for Hammy/Spartan
+function BotModeToggle({ personId, name, emoji, adminPassword }: { personId: string; name: string; emoji: string; adminPassword: string }) {
+  const [botModeEnabled, setBotModeEnabled] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`/api/bot-mode?id=${personId}`)
+      .then(res => res.json())
+      .then(data => {
+        setBotModeEnabled(data.botModeEnabled ?? true);
+        setIsLoading(false);
+      })
+      .catch(() => setIsLoading(false));
+  }, [personId]);
+
+  const handleToggle = async () => {
+    const newValue = !botModeEnabled;
+    setBotModeEnabled(newValue);
+
+    try {
+      await fetch('/api/bot-mode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: personId, enabled: newValue, password: adminPassword }),
+      });
+    } catch {
+      setBotModeEnabled(!newValue); // Revert on error
+    }
+  };
+
+  if (isLoading) {
+    return <div className="animate-pulse bg-muted h-20 rounded-lg" />;
+  }
+
+  return (
+    <div className="flex items-center justify-between p-4 rounded-lg border">
+      <div className="flex items-center gap-3">
+        <span className="text-2xl">{emoji}</span>
+        <div>
+          <p className="font-medium">{name}</p>
+          <p className="text-sm text-muted-foreground">
+            {botModeEnabled ? 'AI responds when away' : 'Only you can respond'}
+          </p>
+        </div>
+      </div>
+      <button
+        onClick={handleToggle}
+        className={`p-2 rounded-lg transition-colors ${botModeEnabled ? 'bg-mariners-teal text-white' : 'bg-muted'}`}
+      >
+        {botModeEnabled ? <ToggleRight className="h-6 w-6" /> : <ToggleLeft className="h-6 w-6" />}
+      </button>
+    </div>
+  );
+}
 
 function TraitSlider({
   label,
@@ -250,11 +308,13 @@ function BotConfigPanel({ botId }: { botId: BotId }) {
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
 
   // Simple password protection (in production, use proper auth)
   const handleLogin = () => {
     if (password === 'mariners2026' || password === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
       setIsAuthenticated(true);
+      setAdminPassword(password);
     } else {
       alert('Invalid password');
     }
@@ -348,11 +408,15 @@ export default function AdminPage() {
         </Card>
       </div>
 
-      <Tabs defaultValue="bots">
+      <Tabs defaultValue="presence">
         <TabsList className="mb-6">
-          <TabsTrigger value="bots">
+          <TabsTrigger value="presence">
+            <User className="mr-2 h-4 w-4" />
+            Your Presence
+          </TabsTrigger>
+          <TabsTrigger value="moose">
             <Bot className="mr-2 h-4 w-4" />
-            Bot Configuration
+            Moose AI
           </TabsTrigger>
           <TabsTrigger value="predictions">
             <Trophy className="mr-2 h-4 w-4" />
@@ -368,47 +432,69 @@ export default function AdminPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Bot Configuration Tab */}
-        <TabsContent value="bots">
-          <div className="grid gap-8 lg:grid-cols-4">
-            {/* Bot Selector */}
-            <Card className="lg:col-span-1">
+        {/* Your Presence Tab - Bot Mode Toggles */}
+        <TabsContent value="presence">
+          <div className="max-w-2xl">
+            <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Select Bot</CardTitle>
+                <CardTitle>Your Availability</CardTitle>
+                <CardDescription>
+                  When you&apos;re away, AI can respond on your behalf using your personality.
+                  Toggle off when you want to respond personally.
+                </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-2">
-                {botIds.map(id => {
-                  const bot = DEFAULT_BOT_CONFIGS[id];
-                  return (
-                    <a
-                      key={id}
-                      href={`#bot-${id}`}
-                      className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted transition-colors"
-                    >
-                      <span className="text-xl">{bot.avatar_emoji}</span>
-                      <div>
-                        <p className="font-medium">{bot.display_name}</p>
-                        <Badge
-                          variant={bot.is_active ? 'success' : 'secondary'}
-                          className="text-xs"
-                        >
-                          {bot.is_active ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </div>
-                    </a>
-                  );
-                })}
+              <CardContent className="space-y-4">
+                <BotModeToggle
+                  personId="captain_hammy"
+                  name="Captain Hammy"
+                  emoji="🧢"
+                  adminPassword={adminPassword}
+                />
+                <BotModeToggle
+                  personId="spartan"
+                  name="Spartan"
+                  emoji="⚔️"
+                  adminPassword={adminPassword}
+                />
               </CardContent>
             </Card>
 
-            {/* Bot Config Panels */}
-            <div className="lg:col-span-3 space-y-8">
-              {botIds.map(id => (
-                <div key={id} id={`bot-${id}`}>
-                  <BotConfigPanel botId={id} />
-                </div>
-              ))}
-            </div>
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>How It Works</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm text-muted-foreground">
+                <p>
+                  <strong className="text-foreground">AI Mode ON:</strong> When someone messages you,
+                  the AI responds using your personality and knowledge. Perfect for when you&apos;re busy.
+                </p>
+                <p>
+                  <strong className="text-foreground">AI Mode OFF:</strong> Messages wait for your
+                  personal response. Use this when you want to engage directly with fans.
+                </p>
+                <p>
+                  Users see a notice when AI is responding on your behalf, so they know.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Moose AI Configuration Tab */}
+        <TabsContent value="moose">
+          <div className="max-w-4xl">
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span className="text-2xl">🫎</span>
+                  Moose - AI Assistant
+                </CardTitle>
+                <CardDescription>
+                  Moose is TridentFans&apos; 24/7 AI assistant. Configure his personality, knowledge, and responses.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+            <BotConfigPanel botId="moose" />
           </div>
         </TabsContent>
 

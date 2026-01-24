@@ -3,36 +3,43 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar } from '@/components/ui/avatar';
-import { Send, ArrowLeft, Sparkles, Loader2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Send, ArrowLeft, Sparkles, Loader2, Bot, User } from 'lucide-react';
 
-const botConfigs = {
+const chatConfigs = {
   moose: {
     name: 'Moose',
     emoji: '🫎',
     color: 'bg-mariners-teal',
-    description: 'Expert fan & historian',
+    description: 'AI-powered Mariners expert',
+    isAI: true,
+    role: 'AI Assistant',
     greeting:
-      "Hey there, fellow Mariners fan! 🫎 I'm Moose, and I'm here to talk all things Seattle Mariners. Whether you want to dive into our rich history from 1977 to now, discuss player stats, or just chat about the game - I'm your guy. What's on your mind?",
+      "Hey there, fellow Mariners fan! 🫎 I'm Moose, your AI assistant here at TridentFans. I'm here to talk all things Seattle Mariners - from our rich history since 1977 to current roster analysis. I'm available 24/7, so fire away! What's on your mind?",
   },
   captain_hammy: {
     name: 'Captain Hammy',
     emoji: '🧢',
     color: 'bg-mariners-navy',
-    description: 'Founder & strategist',
+    description: 'Lifelong M\'s fan & trade analyst',
+    isAI: false,
+    role: 'Founder',
     greeting:
-      "What's up! I'm Captain Hammy, the founder of TridentFans. Been a Mariners fan since the early 90s - grew up in Northern Idaho watching Ken Griffey Jr. swing for the fences. I love talking trades, team strategy, and sharing in both the joy and heartbreak of being a Mariners fan. What do you want to chat about?",
+      "What's up! I'm Captain Hammy, the founder of TridentFans. Been a Mariners fan since the early 90s - grew up in Northern Idaho watching Ken Griffey Jr. swing for the fences. I love talking trades, team strategy, and sharing in both the joy and heartbreak of being a Mariners fan. Drop me a message!",
   },
   spartan: {
     name: 'Spartan',
     emoji: '⚔️',
     color: 'bg-mariners-silver',
-    description: 'Debater & analyst',
+    description: 'Stats guru & hot take artist',
+    isAI: false,
+    role: 'Co-Founder',
     greeting:
-      "Hey! I'm Spartan - Steve to my friends. Let me guess, you want to debate something? Good, because I love a good baseball argument. Whether it's about trades, player comparisons, or hot takes - bring it on. I'm a lawyer by trade, so I'll make sure we examine all the evidence. What's your take?",
+      "Hey! I'm Spartan - Steve to my friends. I help run TridentFans with Captain Hammy. Love a good baseball debate - whether it's trades, player comparisons, or hot takes. I'm a lawyer by trade so I'll make you work for it if you want to change my mind. What's your take?",
   },
 };
 
@@ -44,26 +51,48 @@ interface Message {
 
 export default function ChatPage() {
   const params = useParams();
-  const botId = params.botId as string;
-  const bot = botConfigs[botId as keyof typeof botConfigs];
+  const personId = params.botId as string;
+  const person = chatConfigs[personId as keyof typeof chatConfigs];
+
+  // For non-AI users (Hammy/Spartan), this controls if AI responds on their behalf
+  // In production, this would be fetched from the database
+  const [botModeEnabled, setBotModeEnabled] = useState(true);
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Check bot mode status for non-AI personalities
+  useEffect(() => {
+    if (person && !person.isAI) {
+      // Fetch bot mode status from API
+      fetch(`/api/bot-mode?id=${personId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.botModeEnabled !== undefined) {
+            setBotModeEnabled(data.botModeEnabled);
+          }
+        })
+        .catch(() => {
+          // Default to bot mode if can't fetch
+          setBotModeEnabled(true);
+        });
+    }
+  }, [person, personId]);
+
   useEffect(() => {
     // Add greeting message on first load
-    if (bot && messages.length === 0) {
+    if (person && messages.length === 0) {
       setMessages([
         {
           role: 'assistant',
-          content: bot.greeting,
+          content: person.greeting,
           timestamp: new Date(),
         },
       ]);
     }
-  }, [bot]);
+  }, [person, messages.length]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -81,51 +110,55 @@ export default function ChatPage() {
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
     setInput('');
-    setIsLoading(true);
 
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          botId,
-          messages: newMessages.map(m => ({ role: m.role, content: m.content })),
-        }),
-      });
+    // For AI (Moose) or bot mode enabled, get AI response
+    if (person.isAI || botModeEnabled) {
+      setIsLoading(true);
+      try {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            botId: personId,
+            messages: newMessages.map(m => ({ role: m.role, content: m.content })),
+          }),
+        });
 
-      if (!response.ok) {
-        throw new Error('Failed to get response');
+        if (!response.ok) {
+          throw new Error('Failed to get response');
+        }
+
+        const data = await response.json();
+
+        setMessages(prev => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: data.response,
+            timestamp: new Date(),
+          },
+        ]);
+      } catch (error) {
+        console.error('Chat error:', error);
+        setMessages(prev => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: "Sorry, I'm having trouble connecting right now. Please try again!",
+            timestamp: new Date(),
+          },
+        ]);
+      } finally {
+        setIsLoading(false);
       }
-
-      const data = await response.json();
-
-      setMessages(prev => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: data.response,
-          timestamp: new Date(),
-        },
-      ]);
-    } catch (error) {
-      console.error('Chat error:', error);
-      setMessages(prev => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: "Sorry, I'm having trouble connecting right now. Please try again!",
-          timestamp: new Date(),
-        },
-      ]);
-    } finally {
-      setIsLoading(false);
     }
+    // If bot mode is disabled for Hammy/Spartan, message is just stored (they respond manually)
   };
 
-  if (!bot) {
+  if (!person) {
     return (
       <div className="container mx-auto px-4 py-8 text-center">
-        <h1 className="text-2xl font-bold">Bot not found</h1>
+        <h1 className="text-2xl font-bold">Not found</h1>
         <Link href="/">
           <Button className="mt-4">Return Home</Button>
         </Link>
@@ -146,22 +179,39 @@ export default function ChatPage() {
         </Link>
         <div className="flex items-center gap-4">
           <div
-            className={`flex h-14 w-14 items-center justify-center rounded-full ${bot.color} text-2xl`}
+            className={`flex h-14 w-14 items-center justify-center rounded-full ${person.color} text-2xl`}
           >
-            {bot.emoji}
+            {person.emoji}
           </div>
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
-              {bot.name}
-              <Sparkles className="h-5 w-5 text-mariners-teal" />
+              {person.name}
+              {person.isAI ? (
+                <Bot className="h-5 w-5 text-mariners-teal" />
+              ) : (
+                <User className="h-5 w-5 text-mariners-navy" />
+              )}
             </h1>
-            <p className="text-muted-foreground">{bot.description}</p>
+            <div className="flex items-center gap-2">
+              <Badge variant={person.isAI ? 'secondary' : 'default'} className={person.isAI ? '' : 'bg-mariners-navy'}>
+                {person.role}
+              </Badge>
+              <span className="text-muted-foreground text-sm">{person.description}</span>
+            </div>
           </div>
         </div>
       </div>
 
+      {/* Bot Mode Notice for Hammy/Spartan */}
+      {!person.isAI && botModeEnabled && (
+        <div className="mb-4 p-3 bg-muted rounded-lg text-sm text-muted-foreground flex items-center gap-2">
+          <Sparkles className="h-4 w-4" />
+          <span>{person.name} is currently away. AI is responding on their behalf.</span>
+        </div>
+      )}
+
       {/* Chat Container */}
-      <Card className="h-[calc(100vh-300px)] min-h-[400px] flex flex-col">
+      <Card className="h-[calc(100vh-350px)] min-h-[400px] flex flex-col">
         <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.map((message, index) => (
             <div
@@ -170,9 +220,9 @@ export default function ChatPage() {
             >
               {message.role === 'assistant' ? (
                 <div
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${bot.color} text-sm`}
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${person.color} text-sm`}
                 >
-                  {bot.emoji}
+                  {person.emoji}
                 </div>
               ) : (
                 <Avatar fallback="You" className="h-8 w-8" />
@@ -200,9 +250,9 @@ export default function ChatPage() {
           {isLoading && (
             <div className="flex gap-3">
               <div
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${bot.color} text-sm`}
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${person.color} text-sm`}
               >
-                {bot.emoji}
+                {person.emoji}
               </div>
               <div className="bg-muted rounded-lg p-3">
                 <Loader2 className="h-5 w-5 animate-spin" />
@@ -225,7 +275,7 @@ export default function ChatPage() {
                   handleSend();
                 }
               }}
-              placeholder={`Message ${bot.name}...`}
+              placeholder={`Message ${person.name}...`}
               className="min-h-[60px] resize-none"
               disabled={isLoading}
             />

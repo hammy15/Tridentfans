@@ -61,26 +61,31 @@ const mockHotTopics = [
   },
 ];
 
-const bots = [
-  {
-    id: 'moose',
-    name: 'Moose',
-    emoji: '🫎',
-    description: 'Expert fan & historian',
-    color: 'bg-mariners-teal',
-  },
+// Moose is our AI bot
+const aiBot = {
+  id: 'moose',
+  name: 'Moose',
+  emoji: '🫎',
+  description: 'AI-powered Mariners expert',
+  color: 'bg-mariners-teal',
+};
+
+// Captain Hammy and Spartan are real people (site founders)
+const founders = [
   {
     id: 'captain_hammy',
     name: 'Captain Hammy',
     emoji: '🧢',
-    description: 'Founder & strategist',
+    role: 'Founder',
+    description: 'Lifelong M\'s fan & trade analyst',
     color: 'bg-mariners-navy',
   },
   {
     id: 'spartan',
     name: 'Spartan',
     emoji: '⚔️',
-    description: 'Debater & analyst',
+    role: 'Co-Founder',
+    description: 'Stats guru & hot take artist',
     color: 'bg-mariners-silver',
   },
 ];
@@ -94,8 +99,8 @@ export default function HomePage() {
           <div className="relative z-10">
             <h1 className="text-3xl font-bold md:text-5xl">Welcome to TridentFans</h1>
             <p className="mt-4 max-w-2xl text-lg text-white/90 md:text-xl">
-              The ultimate Seattle Mariners fan community. Connect with AI bots, make predictions,
-              join discussions, and celebrate the team we love.
+              The ultimate Seattle Mariners fan community. Make predictions, join discussions,
+              and connect with fellow fans who share our passion.
             </p>
             <div className="mt-6 flex flex-wrap gap-4">
               <Link href="/predictions">
@@ -260,34 +265,61 @@ export default function HomePage() {
             </CardContent>
           </Card>
 
-          {/* Chat with Bots */}
+          {/* Meet the Team */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-mariners-teal" />
-                Chat with Our Bots
+                👋 Meet the Team
               </CardTitle>
-              <CardDescription>AI-powered Mariners experts</CardDescription>
+              <CardDescription>The people behind TridentFans</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {bots.map(bot => (
-                  <Link key={bot.id} href={`/chat/${bot.id}`} className="block">
+                {founders.map(founder => (
+                  <Link key={founder.id} href={`/chat/${founder.id}`} className="block">
                     <div className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50">
                       <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-full ${bot.color} text-xl`}
+                        className={`flex h-10 w-10 items-center justify-center rounded-full ${founder.color} text-xl`}
                       >
-                        {bot.emoji}
+                        {founder.emoji}
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium">{bot.name}</p>
-                        <p className="text-sm text-muted-foreground">{bot.description}</p>
+                        <p className="font-medium">{founder.name}</p>
+                        <p className="text-xs text-mariners-teal font-medium">{founder.role}</p>
+                        <p className="text-sm text-muted-foreground">{founder.description}</p>
                       </div>
                       <ChevronRight className="h-5 w-5 text-muted-foreground" />
                     </div>
                   </Link>
                 ))}
               </div>
+            </CardContent>
+          </Card>
+
+          {/* AI Assistant */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-mariners-teal" />
+                AI Assistant
+              </CardTitle>
+              <CardDescription>Chat with our AI expert anytime</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href={`/chat/${aiBot.id}`} className="block">
+                <div className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50">
+                  <div
+                    className={`flex h-10 w-10 items-center justify-center rounded-full ${aiBot.color} text-xl`}
+                  >
+                    {aiBot.emoji}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium">{aiBot.name}</p>
+                    <p className="text-sm text-muted-foreground">{aiBot.description}</p>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                </div>
+              </Link>
             </CardContent>
           </Card>
 
