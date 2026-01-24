@@ -15,10 +15,12 @@ import {
   Medal,
   Loader2,
   LogIn,
+  Bot,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import type { PredictionGame, UserPrediction, LeaderboardEntry } from '@/types';
+import { BotVsHumanLeaderboard } from '@/components/predictions/BotVsHumanLeaderboard';
 
 // Mock data for when database is empty
 const mockGames = [
@@ -206,6 +208,10 @@ export default function PredictionsPage() {
         <TabsList className="mb-6">
           <TabsTrigger value="predict">Make Predictions</TabsTrigger>
           <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
+          <TabsTrigger value="bot-vs-human">
+            <Bot className="h-4 w-4 mr-1" />
+            Bot vs Human
+          </TabsTrigger>
           <TabsTrigger value="history">My History</TabsTrigger>
         </TabsList>
 
@@ -458,6 +464,11 @@ export default function PredictionsPage() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Bot vs Human Tab */}
+        <TabsContent value="bot-vs-human">
+          <BotVsHumanLeaderboard />
         </TabsContent>
 
         {/* History Tab */}

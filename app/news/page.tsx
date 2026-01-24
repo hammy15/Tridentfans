@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Newspaper, ExternalLink, Clock, Loader2 } from 'lucide-react';
+import { Newspaper, ExternalLink, Clock, Loader2, Bookmark } from 'lucide-react';
 import Image from 'next/image';
+import { BookmarkButton, ShareToForumButton, NewsBookmarks } from '@/components/news/NewsBookmarks';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface NewsArticle {
   id: string;
@@ -27,9 +29,11 @@ const categories = [
 ];
 
 export default function NewsPage() {
+  const { user } = useAuth();
   const [news, setNews] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [showBookmarks, setShowBookmarks] = useState(false);
 
   useEffect(() => {
     async function fetchNews() {
@@ -79,19 +83,41 @@ export default function NewsPage() {
         </p>
       </div>
 
-      {/* Categories Filter */}
-      <div className="mb-6 flex flex-wrap gap-2">
-        {categories.map(cat => (
+      {/* Categories Filter & Bookmarks Toggle */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap gap-2">
+          {categories.map(cat => (
+            <Button
+              key={cat.id}
+              variant={selectedCategory === cat.id ? 'mariners' : 'outline'}
+              size="sm"
+              onClick={() => {
+                setSelectedCategory(cat.id);
+                setShowBookmarks(false);
+              }}
+            >
+              {cat.name}
+            </Button>
+          ))}
+        </div>
+        {user && (
           <Button
-            key={cat.id}
-            variant={selectedCategory === cat.id ? 'mariners' : 'outline'}
+            variant={showBookmarks ? 'mariners' : 'outline'}
             size="sm"
-            onClick={() => setSelectedCategory(cat.id)}
+            onClick={() => setShowBookmarks(!showBookmarks)}
           >
-            {cat.name}
+            <Bookmark className="h-4 w-4 mr-1" />
+            My Bookmarks
           </Button>
-        ))}
+        )}
       </div>
+
+      {/* Bookmarks Section */}
+      {showBookmarks && user && (
+        <div className="mb-8">
+          <NewsBookmarks showAll />
+        </div>
+      )}
 
       {/* News Grid */}
       {loading ? (
@@ -136,15 +162,29 @@ export default function NewsPage() {
               <CardContent>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">{article.source}</span>
-                  <a
-                    href={article.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-mariners-teal hover:text-mariners-navy transition-colors inline-flex items-center gap-1 text-sm font-medium"
-                  >
-                    Read More
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
+                  <div className="flex items-center gap-1">
+                    <BookmarkButton
+                      articleUrl={article.url}
+                      articleTitle={article.title}
+                      articleSource={article.source}
+                      articleImage={article.imageUrl || undefined}
+                      articleSummary={article.summary}
+                    />
+                    <ShareToForumButton
+                      articleUrl={article.url}
+                      articleTitle={article.title}
+                      articleSummary={article.summary}
+                    />
+                    <a
+                      href={article.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-mariners-teal hover:text-mariners-navy transition-colors inline-flex items-center gap-1 text-sm font-medium"
+                    >
+                      Read More
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
                 </div>
               </CardContent>
             </Card>

@@ -10,7 +10,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase-auth';
-import { Loader2, Trophy, MessageSquare, Calendar, Save, User } from 'lucide-react';
+import { Loader2, Trophy, MessageSquare, Calendar, Save, User, Award } from 'lucide-react';
+import { BadgeShowcase } from '@/components/badges/UserBadges';
 
 export default function ProfilePage() {
   const { user, profile, loading, refreshProfile } = useAuth();
@@ -197,6 +198,20 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Badges */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Award className="h-5 w-5 text-mariners-teal" />
+              Badges & Achievements
+            </CardTitle>
+            <CardDescription>Earned through predictions, forum activity, and engagement</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <BadgeShowcase userId={user.id} />
+          </CardContent>
+        </Card>
 
         {/* Recent Activity */}
         <Card>

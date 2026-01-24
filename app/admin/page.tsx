@@ -22,12 +22,14 @@ import {
   Database,
   CheckCircle,
   Loader2,
+  Calendar,
 } from 'lucide-react';
 import { DEFAULT_BOT_CONFIGS, BOT_PRESETS } from '@/lib/ai-bots';
 import type { BotId, BotTraits } from '@/types';
 import { PredictionManager } from '@/components/admin/PredictionManager';
 import { ForumModeration } from '@/components/admin/ForumModeration';
 import { AnalyticsDashboard } from '@/components/admin/AnalyticsDashboard';
+import { GameThreadManager } from '@/components/admin/GameThreadManager';
 
 const _botIds: BotId[] = ['moose', 'captain_hammy', 'spartan'];
 
@@ -571,6 +573,10 @@ export default function AdminPage() {
             <MessageSquare className="mr-2 h-4 w-4" />
             Forum
           </TabsTrigger>
+          <TabsTrigger value="game-threads">
+            <Calendar className="mr-2 h-4 w-4" />
+            Game Threads
+          </TabsTrigger>
           <TabsTrigger value="analytics">
             <BarChart3 className="mr-2 h-4 w-4" />
             Analytics
@@ -659,6 +665,11 @@ export default function AdminPage() {
         {/* Forum Tab */}
         <TabsContent value="forum">
           <ForumModeration adminPassword={adminPassword} />
+        </TabsContent>
+
+        {/* Game Threads Tab */}
+        <TabsContent value="game-threads">
+          <GameThreadManager adminPassword={adminPassword} />
         </TabsContent>
 
         {/* Analytics Tab */}
