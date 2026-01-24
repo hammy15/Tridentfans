@@ -5,7 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Settings,
@@ -26,8 +25,11 @@ import {
 } from 'lucide-react';
 import { DEFAULT_BOT_CONFIGS, BOT_PRESETS } from '@/lib/ai-bots';
 import type { BotId, BotTraits } from '@/types';
+import { PredictionManager } from '@/components/admin/PredictionManager';
+import { ForumModeration } from '@/components/admin/ForumModeration';
+import { AnalyticsDashboard } from '@/components/admin/AnalyticsDashboard';
 
-const botIds: BotId[] = ['moose', 'captain_hammy', 'spartan'];
+const _botIds: BotId[] = ['moose', 'captain_hammy', 'spartan'];
 
 // Bot mode toggle component for Hammy/Spartan
 function BotModeToggle({
@@ -352,7 +354,9 @@ function KnowledgeBasePanel({ adminPassword }: { adminPassword: string }) {
       const data = await res.json();
 
       if (data.success) {
-        setSeedResult(`Successfully loaded ${data.categories.length} categories of Mariners history!`);
+        setSeedResult(
+          `Successfully loaded ${data.categories.length} categories of Mariners history!`
+        );
         // Refresh status
         const statusRes = await fetch('/api/admin/seed-history');
         const statusData = await statusRes.json();
@@ -375,7 +379,8 @@ function KnowledgeBasePanel({ adminPassword }: { adminPassword: string }) {
           Knowledge Base
         </CardTitle>
         <CardDescription>
-          Historical Mariners data injected into all bot conversations for accurate, detailed responses.
+          Historical Mariners data injected into all bot conversations for accurate, detailed
+          responses.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -405,10 +410,7 @@ function KnowledgeBasePanel({ adminPassword }: { adminPassword: string }) {
             {historyStatus?.categories && historyStatus.categories.length > 0 && (
               <div className="flex flex-wrap gap-1">
                 {historyStatus.categories.map(cat => (
-                  <span
-                    key={cat}
-                    className="px-2 py-1 bg-muted rounded text-xs"
-                  >
+                  <span key={cat} className="px-2 py-1 bg-muted rounded text-xs">
                     {cat.replace(/_/g, ' ')}
                   </span>
                 ))}
@@ -416,11 +418,7 @@ function KnowledgeBasePanel({ adminPassword }: { adminPassword: string }) {
             )}
 
             <div className="flex items-center gap-4">
-              <Button
-                variant="mariners"
-                onClick={handleSeedHistory}
-                disabled={isSeeding}
-              >
+              <Button variant="mariners" onClick={handleSeedHistory} disabled={isSeeding}>
                 {isSeeding ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -439,7 +437,9 @@ function KnowledgeBasePanel({ adminPassword }: { adminPassword: string }) {
             </div>
 
             {seedResult && (
-              <p className={`text-sm ${seedResult.includes('Successfully') ? 'text-green-600' : 'text-red-500'}`}>
+              <p
+                className={`text-sm ${seedResult.includes('Successfully') ? 'text-green-600' : 'text-red-500'}`}
+              >
                 {seedResult}
               </p>
             )}
@@ -653,61 +653,17 @@ export default function AdminPage() {
 
         {/* Predictions Tab */}
         <TabsContent value="predictions">
-          <Card>
-            <CardHeader>
-              <CardTitle>Prediction Management</CardTitle>
-              <CardDescription>Create games, manage scoring, and view statistics</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12 text-muted-foreground">
-                <Trophy className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Prediction management coming soon</p>
-                <p className="text-sm mt-2">
-                  Create prediction games, set scoring rules, and review submissions
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <PredictionManager adminPassword={adminPassword} />
         </TabsContent>
 
         {/* Forum Tab */}
         <TabsContent value="forum">
-          <Card>
-            <CardHeader>
-              <CardTitle>Forum Moderation</CardTitle>
-              <CardDescription>Manage posts, comments, and user reports</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12 text-muted-foreground">
-                <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Forum moderation coming soon</p>
-                <p className="text-sm mt-2">
-                  Review reported content, manage categories, and pin posts
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <ForumModeration adminPassword={adminPassword} />
         </TabsContent>
 
         {/* Analytics Tab */}
         <TabsContent value="analytics">
-          <Card>
-            <CardHeader>
-              <CardTitle>Analytics Dashboard</CardTitle>
-              <CardDescription>
-                User engagement, prediction accuracy, and site metrics
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12 text-muted-foreground">
-                <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Analytics dashboard coming soon</p>
-                <p className="text-sm mt-2">
-                  View user engagement, prediction stats, and traffic data
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <AnalyticsDashboard />
         </TabsContent>
       </Tabs>
     </div>

@@ -49,9 +49,19 @@ export async function GET(request: NextRequest) {
       }
 
       case 'live': {
-        const game = await getLiveGame();
+        const liveGame = await getLiveGame();
+        if (liveGame) {
+          return NextResponse.json({
+            game: formatGameForDisplay(liveGame),
+            isLive: true,
+          });
+        }
+        // No live game, check for today's game
+        const todayGame = await getTodaysGame();
         return NextResponse.json({
-          game: game ? formatGameForDisplay(game) : null,
+          game: null,
+          today: todayGame ? formatGameForDisplay(todayGame) : null,
+          isLive: false,
         });
       }
 

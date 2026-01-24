@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Trophy, MessageSquare, TrendingUp, Calendar, ChevronRight, Sparkles } from 'lucide-react';
+import { LiveGameBanner } from '@/components/live/LiveGameBanner';
 
 // Mock data - in production this would come from APIs/database
 const mockUpcomingGames = [
@@ -94,6 +95,11 @@ const founders = [
 export default function HomePage() {
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Live Game Banner */}
+      <section className="mb-6">
+        <LiveGameBanner />
+      </section>
+
       {/* Hero Section */}
       <section className="mb-12">
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-mariners-navy to-mariners-teal p-8 text-white md:p-12">

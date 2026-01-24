@@ -121,3 +121,62 @@ export async function PUT(
     return NextResponse.json({ error: 'Failed to update post' }, { status: 500 });
   }
 }
+
+// PATCH - Update post (pin/unpin) - Admin only
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ postId: string }> }
+) {
+  try {
+    const { postId } = await params;
+    const body = await request.json();
+    const { is_pinned, password } = body;
+
+    // Simple password check
+    if (password !== process.env.NEXT_PUBLIC_ADMIN_PASSWORD && password !== 'mariners2026') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { data, error } = await supabase
+      .from('forum_posts')
+      .update({ is_pinned })
+      .eq('id', postId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return NextResponse.json({ post: data });
+  } catch (error) {
+    console.error('Forum PATCH error:', error);
+    return NextResponse.json({ error: 'Failed to update post' }, { status: 500 });
+  }
+}
+
+// DELETE - Delete post - Admin only
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ postId: string }> }
+) {
+  try {
+    const { postId } = await params;
+    const body = await request.json();
+    const { password } = body;
+
+    // Simple password check
+    if (password !== process.env.NEXT_PUBLIC_ADMIN_PASSWORD && password !== 'mariners2026') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Delete comments first (cascade should handle this, but being explicit)
+    await supabase.from('forum_comments').delete().eq('post_id', postId);
+
+    // Delete the post
+    const { error } = await supabase.from('forum_posts').delete().eq('id', postId);
+
+    if (error) throw error;
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Forum DELETE error:', error);
+    return NextResponse.json({ error: 'Failed to delete post' }, { status: 500 });
+  }
+}
