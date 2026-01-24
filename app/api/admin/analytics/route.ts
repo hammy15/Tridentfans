@@ -64,12 +64,12 @@ export async function GET() {
     ]);
 
     // Get most popular bot
-    const { data: botStats } = await supabase.from('bot_conversations').select('bot_id').limit(100);
+    const { data: botConversations } = await supabase.from('bot_conversations').select('bot_id').limit(100);
 
     let mostPopularBot = 'Moose';
-    if (botStats && botStats.length > 0) {
+    if (botConversations && botConversations.length > 0) {
       const botCounts: Record<string, number> = {};
-      botStats.forEach(c => {
+      botConversations.forEach(c => {
         botCounts[c.bot_id] = (botCounts[c.bot_id] || 0) + 1;
       });
       const sorted = Object.entries(botCounts).sort((a, b) => b[1] - a[1]);
