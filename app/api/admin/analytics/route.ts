@@ -5,6 +5,7 @@ export async function GET() {
   try {
     const now = new Date();
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
     // Fetch all stats in parallel
     const [
@@ -17,6 +18,10 @@ export async function GET() {
       gamesResult,
       conversationsResult,
       recentConversationsResult,
+      donationsResult,
+      recentDonationsResult,
+      botPredictionsResult,
+      badgesResult,
     ] = await Promise.all([
       // Total users
       supabase.from('profiles').select('id', { count: 'exact', head: true }),
@@ -45,6 +50,17 @@ export async function GET() {
         .from('bot_conversations')
         .select('id', { count: 'exact', head: true })
         .gte('created_at', weekAgo.toISOString()),
+      // Total donations
+      supabase.from('donations').select('amount'),
+      // Donations this month
+      supabase
+        .from('donations')
+        .select('amount')
+        .gte('created_at', monthAgo.toISOString()),
+      // Bot predictions with scores
+      supabase.from('bot_predictions').select('bot_id, score').not('score', 'is', null),
+      // Total badges awarded
+      supabase.from('user_badges').select('id', { count: 'exact', head: true }),
     ]);
 
     // Get most popular bot
@@ -68,6 +84,36 @@ export async function GET() {
     const totalPredictions = predictionsResult.count || 0;
     const totalGames = gamesResult.count || 0;
 
+    // Calculate donation totals
+    const totalDonations = donationsResult.data?.reduce((sum, d) => sum + (d.amount || 0), 0) || 0;
+    const monthlyDonations = recentDonationsResult.data?.reduce((sum, d) => sum + (d.amount || 0), 0) || 0;
+    const donorCount = donationsResult.data?.length || 0;
+
+    // Calculate bot prediction stats
+    const botStats: Record<string, { points: number; predictions: number }> = {
+      moose: { points: 0, predictions: 0 },
+      captain_hammy: { points: 0, predictions: 0 },
+      spartan: { points: 0, predictions: 0 },
+    };
+
+    botPredictionsResult.data?.forEach(bp => {
+      if (botStats[bp.bot_id]) {
+        botStats[bp.bot_id].points += bp.score || 0;
+        botStats[bp.bot_id].predictions += 1;
+      }
+    });
+
+    const botLeaderboard = Object.entries(botStats)
+      .map(([id, stats]) => ({
+        id,
+        name: id === 'moose' ? 'Moose' : id === 'captain_hammy' ? 'Captain Hammy' : 'Spartan',
+        emoji: id === 'moose' ? '🫎' : id === 'captain_hammy' ? '🧢' : '⚔️',
+        points: stats.points,
+        predictions: stats.predictions,
+        accuracy: stats.predictions > 0 ? Math.round((stats.points / (stats.predictions * 10)) * 100) : 0,
+      }))
+      .sort((a, b) => b.points - a.points);
+
     return NextResponse.json({
       users: {
         total: totalUsers,
@@ -88,6 +134,15 @@ export async function GET() {
         totalConversations: conversationsResult.count || 0,
         conversationsThisWeek: recentConversationsResult.count || 0,
         mostPopularBot,
+        leaderboard: botLeaderboard,
+      },
+      donations: {
+        total: totalDonations / 100, // Convert cents to dollars
+        thisMonth: monthlyDonations / 100,
+        donorCount,
+      },
+      badges: {
+        totalAwarded: badgesResult.count || 0,
       },
     });
   } catch (error) {

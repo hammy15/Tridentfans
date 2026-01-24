@@ -299,3 +299,116 @@ export function formatGameForDisplay(game: MLBGame) {
     isWin: marinersTeam.isWinner,
   };
 }
+
+/**
+ * Live game details interface
+ */
+export interface LiveGameDetails {
+  inning: number;
+  inningHalf: 'Top' | 'Bottom';
+  outs: number;
+  balls: number;
+  strikes: number;
+  onFirst: boolean;
+  onSecond: boolean;
+  onThird: boolean;
+  currentBatter?: {
+    name: string;
+    avg: string;
+  };
+  currentPitcher?: {
+    name: string;
+    era: string;
+  };
+  lastPlay?: string;
+  marinersHits: number;
+  opponentHits: number;
+  marinersErrors: number;
+  opponentErrors: number;
+}
+
+/**
+ * Get detailed live game data
+ */
+export async function getDetailedLiveGame(gamePk: number): Promise<LiveGameDetails | null> {
+  try {
+    const response = await fetchMLB<{
+      liveData: {
+        linescore: {
+          currentInning: number;
+          currentInningOrdinal: string;
+          inningHalf: string;
+          outs: number;
+          balls: number;
+          strikes: number;
+          offense: {
+            first?: { fullName: string };
+            second?: { fullName: string };
+            third?: { fullName: string };
+            batter?: { fullName: string };
+          };
+          defense: {
+            pitcher?: { fullName: string };
+          };
+          teams: {
+            home: { runs: number; hits: number; errors: number };
+            away: { runs: number; hits: number; errors: number };
+          };
+        };
+        plays: {
+          currentPlay?: {
+            result?: { description: string };
+          };
+          allPlays?: Array<{ result?: { description: string } }>;
+        };
+      };
+      gameData: {
+        teams: {
+          home: { id: number };
+        };
+        players: Record<string, { stats?: { batting?: { avg: string }; pitching?: { era: string } } }>;
+      };
+    }>(`/game/${gamePk}/feed/live`);
+
+    const linescore = response.liveData.linescore;
+    const plays = response.liveData.plays;
+    const isMarinersHome = response.gameData.teams.home.id === MARINERS_TEAM_ID;
+
+    const marinersStats = isMarinersHome ? linescore.teams.home : linescore.teams.away;
+    const opponentStats = isMarinersHome ? linescore.teams.away : linescore.teams.home;
+
+    // Get last play description
+    let lastPlay: string | undefined;
+    if (plays.currentPlay?.result?.description) {
+      lastPlay = plays.currentPlay.result.description;
+    } else if (plays.allPlays && plays.allPlays.length > 0) {
+      const last = plays.allPlays[plays.allPlays.length - 1];
+      lastPlay = last?.result?.description;
+    }
+
+    return {
+      inning: linescore.currentInning,
+      inningHalf: linescore.inningHalf === 'Top' ? 'Top' : 'Bottom',
+      outs: linescore.outs || 0,
+      balls: linescore.balls || 0,
+      strikes: linescore.strikes || 0,
+      onFirst: !!linescore.offense?.first,
+      onSecond: !!linescore.offense?.second,
+      onThird: !!linescore.offense?.third,
+      currentBatter: linescore.offense?.batter
+        ? { name: linescore.offense.batter.fullName, avg: '.---' }
+        : undefined,
+      currentPitcher: linescore.defense?.pitcher
+        ? { name: linescore.defense.pitcher.fullName, era: '-.--' }
+        : undefined,
+      lastPlay,
+      marinersHits: marinersStats.hits,
+      opponentHits: opponentStats.hits,
+      marinersErrors: marinersStats.errors,
+      opponentErrors: opponentStats.errors,
+    };
+  } catch (error) {
+    console.error('Failed to get detailed live game:', error);
+    return null;
+  }
+}

@@ -7,6 +7,7 @@ import {
   getTodaysGame,
   getLiveGame,
   formatGameForDisplay,
+  getDetailedLiveGame,
 } from '@/lib/mlb-api';
 
 export async function GET(request: NextRequest) {
@@ -51,8 +52,12 @@ export async function GET(request: NextRequest) {
       case 'live': {
         const liveGame = await getLiveGame();
         if (liveGame) {
+          const details = await getDetailedLiveGame(liveGame.gamePk);
           return NextResponse.json({
-            game: formatGameForDisplay(liveGame),
+            game: {
+              ...formatGameForDisplay(liveGame),
+              ...details,
+            },
             isLive: true,
           });
         }

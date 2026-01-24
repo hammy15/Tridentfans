@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Radio, Trophy, Clock, ChevronRight } from 'lucide-react';
+import { Radio, Trophy, Clock, ChevronRight, Circle } from 'lucide-react';
 
 interface LiveGameData {
   gamePk: number;
@@ -19,12 +19,102 @@ interface LiveGameData {
   inning?: number;
   inningHalf?: 'Top' | 'Bottom';
   gameTime?: string;
+  // Enhanced live data
+  outs?: number;
+  balls?: number;
+  strikes?: number;
+  onFirst?: boolean;
+  onSecond?: boolean;
+  onThird?: boolean;
+  currentBatter?: { name: string; avg: string };
+  currentPitcher?: { name: string; era: string };
+  lastPlay?: string;
+  marinersHits?: number;
+  opponentHits?: number;
+  marinersErrors?: number;
+  opponentErrors?: number;
+}
+
+// Diamond component showing runners on base
+function BaseDiamond({
+  onFirst,
+  onSecond,
+  onThird,
+}: {
+  onFirst?: boolean;
+  onSecond?: boolean;
+  onThird?: boolean;
+}) {
+  return (
+    <div className="relative w-12 h-12">
+      {/* Second base (top) */}
+      <div
+        className={`absolute top-0 left-1/2 -translate-x-1/2 w-4 h-4 rotate-45 border-2 ${
+          onSecond ? 'bg-yellow-400 border-yellow-500' : 'bg-muted border-muted-foreground/30'
+        }`}
+      />
+      {/* Third base (left) */}
+      <div
+        className={`absolute top-1/2 left-0 -translate-y-1/2 w-4 h-4 rotate-45 border-2 ${
+          onThird ? 'bg-yellow-400 border-yellow-500' : 'bg-muted border-muted-foreground/30'
+        }`}
+      />
+      {/* First base (right) */}
+      <div
+        className={`absolute top-1/2 right-0 -translate-y-1/2 w-4 h-4 rotate-45 border-2 ${
+          onFirst ? 'bg-yellow-400 border-yellow-500' : 'bg-muted border-muted-foreground/30'
+        }`}
+      />
+    </div>
+  );
+}
+
+// Outs indicator
+function OutsIndicator({ outs = 0 }: { outs?: number }) {
+  return (
+    <div className="flex gap-1 items-center">
+      <span className="text-xs text-muted-foreground mr-1">OUT</span>
+      {[0, 1, 2].map(i => (
+        <Circle
+          key={i}
+          className={`h-3 w-3 ${i < outs ? 'fill-red-500 text-red-500' : 'text-muted-foreground/30'}`}
+        />
+      ))}
+    </div>
+  );
+}
+
+// Count display (balls-strikes)
+function CountDisplay({ balls = 0, strikes = 0 }: { balls?: number; strikes?: number }) {
+  return (
+    <div className="flex gap-2 text-sm">
+      <div className="flex gap-0.5 items-center">
+        <span className="text-xs text-muted-foreground mr-1">B</span>
+        {[0, 1, 2, 3].map(i => (
+          <div
+            key={i}
+            className={`w-2 h-2 rounded-full ${i < balls ? 'bg-green-500' : 'bg-muted'}`}
+          />
+        ))}
+      </div>
+      <div className="flex gap-0.5 items-center">
+        <span className="text-xs text-muted-foreground mr-1">S</span>
+        {[0, 1, 2].map(i => (
+          <div
+            key={i}
+            className={`w-2 h-2 rounded-full ${i < strikes ? 'bg-yellow-500' : 'bg-muted'}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export function LiveGameBanner() {
   const [game, setGame] = useState<LiveGameData | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     async function fetchLiveGame() {
@@ -36,7 +126,6 @@ export function LiveGameBanner() {
           setGame(data.game);
           setLastUpdate(new Date());
         } else if (data.today) {
-          // Show today's upcoming game
           setGame({
             ...data.today,
             status: 'Preview',
@@ -60,26 +149,32 @@ export function LiveGameBanner() {
   }, []);
 
   if (loading) {
-    return null; // Don't show anything while loading
+    return null;
   }
 
   if (!game) {
-    return null; // No game today
+    return null;
   }
 
   const isLive = game.status === 'Live';
   const isFinal = game.status === 'Final';
   const isPreview = game.status === 'Preview';
 
-  // Determine if Mariners are winning
   const marinersWinning =
     game.marinersScore !== undefined &&
     game.opponentScore !== undefined &&
     game.marinersScore > game.opponentScore;
 
+  const getInningOrdinal = (n: number) => {
+    if (n === 1) return '1st';
+    if (n === 2) return '2nd';
+    if (n === 3) return '3rd';
+    return `${n}th`;
+  };
+
   return (
     <Card
-      className={`overflow-hidden ${
+      className={`overflow-hidden transition-all ${
         isLive
           ? 'border-red-500 bg-gradient-to-r from-red-500/10 to-mariners-navy/10'
           : isFinal
@@ -90,8 +185,9 @@ export function LiveGameBanner() {
       }`}
     >
       <CardContent className="p-4">
+        {/* Main Row */}
         <div className="flex items-center justify-between">
-          {/* Left: Game Status */}
+          {/* Left: Status + Score */}
           <div className="flex items-center gap-4">
             {isLive && (
               <Badge variant="destructive" className="flex items-center gap-1 animate-pulse">
@@ -151,30 +247,48 @@ export function LiveGameBanner() {
           </div>
 
           {/* Center: Game Info */}
-          <div className="hidden md:block text-center">
+          <div className="hidden md:flex items-center gap-6">
             {isLive && game.inning && (
-              <p className="font-semibold">
-                {game.inningHalf} {game.inning}
-                {game.inning === 1
-                  ? 'st'
-                  : game.inning === 2
-                    ? 'nd'
-                    : game.inning === 3
-                      ? 'rd'
-                      : 'th'}
-              </p>
+              <>
+                <div className="text-center">
+                  <p className="font-semibold text-lg">
+                    {game.inningHalf} {getInningOrdinal(game.inning)}
+                  </p>
+                  <OutsIndicator outs={game.outs} />
+                </div>
+                <BaseDiamond
+                  onFirst={game.onFirst}
+                  onSecond={game.onSecond}
+                  onThird={game.onThird}
+                />
+                <CountDisplay balls={game.balls} strikes={game.strikes} />
+              </>
             )}
-            {isPreview && game.gameTime && <p className="font-semibold">{game.gameTime}</p>}
-            <p className="text-sm text-muted-foreground">{game.statusDetail}</p>
-            {lastUpdate && isLive && (
-              <p className="text-xs text-muted-foreground">
-                Updated {lastUpdate.toLocaleTimeString()}
-              </p>
+            {isPreview && game.gameTime && (
+              <div className="text-center">
+                <p className="font-semibold text-lg">{game.gameTime}</p>
+                <p className="text-sm text-muted-foreground">{game.statusDetail}</p>
+              </div>
+            )}
+            {isFinal && (
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">{game.statusDetail}</p>
+              </div>
             )}
           </div>
 
           {/* Right: Actions */}
           <div className="flex items-center gap-2">
+            {isLive && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setExpanded(!expanded)}
+                className="hidden md:flex"
+              >
+                {expanded ? 'Less' : 'More'}
+              </Button>
+            )}
             {isPreview && (
               <Link href="/predictions">
                 <Button variant="mariners" size="sm">
@@ -193,6 +307,75 @@ export function LiveGameBanner() {
             )}
           </div>
         </div>
+
+        {/* Expanded Live Details */}
+        {isLive && expanded && (
+          <div className="mt-4 pt-4 border-t grid md:grid-cols-3 gap-4">
+            {/* At Bat */}
+            <div className="bg-muted/50 rounded-lg p-3">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">At Bat</p>
+              <p className="font-semibold">{game.currentBatter?.name || 'Unknown'}</p>
+              {game.currentBatter?.avg && (
+                <p className="text-sm text-muted-foreground">AVG: {game.currentBatter.avg}</p>
+              )}
+            </div>
+
+            {/* Pitching */}
+            <div className="bg-muted/50 rounded-lg p-3">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Pitching</p>
+              <p className="font-semibold">{game.currentPitcher?.name || 'Unknown'}</p>
+              {game.currentPitcher?.era && (
+                <p className="text-sm text-muted-foreground">ERA: {game.currentPitcher.era}</p>
+              )}
+            </div>
+
+            {/* Game Stats */}
+            <div className="bg-muted/50 rounded-lg p-3">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Stats</p>
+              <div className="grid grid-cols-3 text-center text-sm">
+                <div></div>
+                <div className="font-semibold">H</div>
+                <div className="font-semibold">E</div>
+                <div className="text-left">SEA</div>
+                <div>{game.marinersHits ?? 0}</div>
+                <div>{game.marinersErrors ?? 0}</div>
+                <div className="text-left">{game.opponentAbbr}</div>
+                <div>{game.opponentHits ?? 0}</div>
+                <div>{game.opponentErrors ?? 0}</div>
+              </div>
+            </div>
+
+            {/* Last Play */}
+            {game.lastPlay && (
+              <div className="md:col-span-3 bg-muted/50 rounded-lg p-3">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
+                  Last Play
+                </p>
+                <p className="text-sm">{game.lastPlay}</p>
+              </div>
+            )}
+
+            {/* Update Time */}
+            {lastUpdate && (
+              <div className="md:col-span-3 text-center text-xs text-muted-foreground">
+                Last updated: {lastUpdate.toLocaleTimeString()}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Mobile: Condensed Info */}
+        {isLive && game.inning && (
+          <div className="md:hidden mt-3 pt-3 border-t flex items-center justify-between text-sm">
+            <span>
+              {game.inningHalf} {getInningOrdinal(game.inning)}
+            </span>
+            <span>{game.outs} out{game.outs !== 1 ? 's' : ''}</span>
+            <span>
+              {game.balls}-{game.strikes}
+            </span>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
