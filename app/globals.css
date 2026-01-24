@@ -1,0 +1,106 @@
+@import 'tailwindcss';
+
+@theme {
+  /* Mariners Colors */
+  --color-mariners-navy: #0c2c56;
+  --color-mariners-teal: #005c5c;
+  --color-mariners-silver: #c4ced4;
+  --color-mariners-white: #ffffff;
+  --color-mariners-gold: #c9a227;
+
+  /* Semantic Colors - Light Mode (Default) */
+  --color-background: #f8fafb;
+  --color-foreground: #0c2c56;
+  --color-card: #ffffff;
+  --color-card-foreground: #0c2c56;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #0c2c56;
+  --color-primary: #005c5c;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #0c2c56;
+  --color-secondary-foreground: #ffffff;
+  --color-muted: #f1f5f9;
+  --color-muted-foreground: #64748b;
+  --color-accent: #e0f2f1;
+  --color-accent-foreground: #005c5c;
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+  --color-border: #e2e8f0;
+  --color-input: #e2e8f0;
+  --color-ring: #005c5c;
+
+  /* Radius */
+  --radius-lg: 0.75rem;
+  --radius-md: 0.5rem;
+  --radius-sm: 0.25rem;
+
+  /* Font */
+  --font-sans:
+    ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+    'Noto Color Emoji';
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
+  }
+}
+
+/* Dark mode overrides */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --color-background: #0c1929;
+    --color-foreground: #f8fafb;
+    --color-card: #162a43;
+    --color-card-foreground: #f8fafb;
+    --color-popover: #162a43;
+    --color-popover-foreground: #f8fafb;
+    --color-muted: #1e3a5f;
+    --color-muted-foreground: #94a3b8;
+    --color-accent: #0d3d3d;
+    --color-accent-foreground: #5eead4;
+    --color-border: #1e3a5f;
+    --color-input: #1e3a5f;
+  }
+}
+
+.dark {
+  --color-background: #0c1929;
+  --color-foreground: #f8fafb;
+  --color-card: #162a43;
+  --color-card-foreground: #f8fafb;
+  --color-popover: #162a43;
+  --color-popover-foreground: #f8fafb;
+  --color-muted: #1e3a5f;
+  --color-muted-foreground: #94a3b8;
+  --color-accent: #0d3d3d;
+  --color-accent-foreground: #5eead4;
+  --color-border: #1e3a5f;
+  --color-input: #1e3a5f;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-muted);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-mariners-teal);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-mariners-navy);
+}
