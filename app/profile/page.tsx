@@ -10,8 +10,19 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase-auth';
-import { Loader2, Trophy, MessageSquare, Calendar, Save, Target, Award, TrendingUp } from 'lucide-react';
+import {
+  Loader2,
+  Trophy,
+  MessageSquare,
+  Calendar,
+  Save,
+  Target,
+  Award,
+  TrendingUp,
+  Bell,
+} from 'lucide-react';
 import { BadgeShowcase } from '@/components/badges/UserBadges';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface ProfileStats {
   posts: number;
@@ -27,7 +38,12 @@ interface ProfileStats {
 
 interface RecentActivity {
   posts: Array<{ id: string; title: string; created_at: string }>;
-  predictions: Array<{ id: string; game: { opponent: string; game_date: string } | null; score: number | null; submitted_at: string }>;
+  predictions: Array<{
+    id: string;
+    game: { opponent: string; game_date: string } | null;
+    score: number | null;
+    submitted_at: string;
+  }>;
 }
 
 export default function ProfilePage() {
@@ -40,6 +56,13 @@ export default function ProfilePage() {
   const [stats, setStats] = useState<ProfileStats | null>(null);
   const [recentActivity, setRecentActivity] = useState<RecentActivity | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
+  const [notificationPrefs, setNotificationPrefs] = useState({
+    email_game_reminders: true,
+    email_prediction_results: true,
+    email_weekly_digest: true,
+    email_mentions: true,
+  });
+  const [savingNotifications, setSavingNotifications] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -51,6 +74,15 @@ export default function ProfilePage() {
     if (profile) {
       setDisplayName(profile.display_name || '');
       setBio(profile.bio || '');
+      if (profile.notification_preferences) {
+        setNotificationPrefs({
+          email_game_reminders: profile.notification_preferences.email_game_reminders ?? true,
+          email_prediction_results:
+            profile.notification_preferences.email_prediction_results ?? true,
+          email_weekly_digest: profile.notification_preferences.email_weekly_digest ?? true,
+          email_mentions: profile.notification_preferences.email_mentions ?? true,
+        });
+      }
     }
   }, [profile]);
 
@@ -96,6 +128,22 @@ export default function ProfilePage() {
       setEditing(false);
     }
     setSaving(false);
+  };
+
+  const handleNotificationToggle = async (key: keyof typeof notificationPrefs) => {
+    if (!user) return;
+
+    const newPrefs = { ...notificationPrefs, [key]: !notificationPrefs[key] };
+    setNotificationPrefs(newPrefs);
+    setSavingNotifications(true);
+
+    const supabase = createClient();
+    await supabase
+      .from('profiles')
+      .update({ notification_preferences: newPrefs })
+      .eq('id', user.id);
+
+    setSavingNotifications(false);
   };
 
   if (loading) {
@@ -211,7 +259,9 @@ export default function ProfilePage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{loadingStats ? '-' : stats?.predictions || 0}</div>
+              <div className="text-2xl font-bold">
+                {loadingStats ? '-' : stats?.predictions || 0}
+              </div>
               <p className="text-xs text-muted-foreground">Total predictions made</p>
             </CardContent>
           </Card>
@@ -224,7 +274,9 @@ export default function ProfilePage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{loadingStats ? '-' : `${stats?.accuracy || 0}%`}</div>
+              <div className="text-2xl font-bold">
+                {loadingStats ? '-' : `${stats?.accuracy || 0}%`}
+              </div>
               <p className="text-xs text-muted-foreground">Prediction accuracy</p>
             </CardContent>
           </Card>
@@ -237,8 +289,12 @@ export default function ProfilePage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{loadingStats ? '-' : (stats?.posts || 0) + (stats?.comments || 0)}</div>
-              <p className="text-xs text-muted-foreground">{stats?.posts || 0} posts, {stats?.comments || 0} comments</p>
+              <div className="text-2xl font-bold">
+                {loadingStats ? '-' : (stats?.posts || 0) + (stats?.comments || 0)}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {stats?.posts || 0} posts, {stats?.comments || 0} comments
+              </p>
             </CardContent>
           </Card>
 
@@ -253,7 +309,9 @@ export default function ProfilePage() {
               <div className="text-2xl font-bold">
                 {loadingStats ? '-' : stats?.leaderboardRank ? `#${stats.leaderboardRank}` : '--'}
               </div>
-              <p className="text-xs text-muted-foreground">{stats?.leaderboardPoints || 0} points</p>
+              <p className="text-xs text-muted-foreground">
+                {stats?.leaderboardPoints || 0} points
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -265,7 +323,9 @@ export default function ProfilePage() {
               <Award className="h-5 w-5 text-mariners-teal" />
               Badges & Achievements
             </CardTitle>
-            <CardDescription>Earned through predictions, forum activity, and engagement</CardDescription>
+            <CardDescription>
+              Earned through predictions, forum activity, and engagement
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <BadgeShowcase userId={user.id} />
@@ -283,14 +343,20 @@ export default function ProfilePage() {
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin text-mariners-teal" />
               </div>
-            ) : (recentActivity?.posts?.length || 0) + (recentActivity?.predictions?.length || 0) > 0 ? (
+            ) : (recentActivity?.posts?.length || 0) + (recentActivity?.predictions?.length || 0) >
+              0 ? (
               <div className="space-y-4">
                 {recentActivity?.predictions?.map(pred => (
-                  <div key={pred.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                  <div
+                    key={pred.id}
+                    className="flex items-center justify-between py-2 border-b last:border-0"
+                  >
                     <div className="flex items-center gap-3">
                       <Trophy className="h-4 w-4 text-mariners-teal" />
                       <div>
-                        <p className="font-medium">Prediction: vs {pred.game?.opponent || 'Unknown'}</p>
+                        <p className="font-medium">
+                          Prediction: vs {pred.game?.opponent || 'Unknown'}
+                        </p>
                         <p className="text-xs text-muted-foreground">
                           {new Date(pred.submitted_at).toLocaleDateString()}
                         </p>
@@ -304,7 +370,10 @@ export default function ProfilePage() {
                   </div>
                 ))}
                 {recentActivity?.posts?.map(post => (
-                  <div key={post.id} className="flex items-center gap-3 py-2 border-b last:border-0">
+                  <div
+                    key={post.id}
+                    className="flex items-center gap-3 py-2 border-b last:border-0"
+                  >
                     <MessageSquare className="h-4 w-4 text-blue-500" />
                     <div>
                       <p className="font-medium">{post.title}</p>
@@ -323,6 +392,95 @@ export default function ProfilePage() {
                 </p>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Notification Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bell className="h-5 w-5 text-mariners-teal" />
+              Notification Settings
+            </CardTitle>
+            <CardDescription>Manage your email notification preferences</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="game-reminders" className="font-medium">
+                    Game Reminders
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Get notified before Mariners games start
+                  </p>
+                </div>
+                <Checkbox
+                  id="game-reminders"
+                  checked={notificationPrefs.email_game_reminders}
+                  onCheckedChange={() => handleNotificationToggle('email_game_reminders')}
+                  disabled={savingNotifications}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="prediction-results" className="font-medium">
+                    Prediction Results
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Get notified when prediction results are available
+                  </p>
+                </div>
+                <Checkbox
+                  id="prediction-results"
+                  checked={notificationPrefs.email_prediction_results}
+                  onCheckedChange={() => handleNotificationToggle('email_prediction_results')}
+                  disabled={savingNotifications}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="weekly-digest" className="font-medium">
+                    Weekly Digest
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Receive a weekly summary of your activity and stats
+                  </p>
+                </div>
+                <Checkbox
+                  id="weekly-digest"
+                  checked={notificationPrefs.email_weekly_digest}
+                  onCheckedChange={() => handleNotificationToggle('email_weekly_digest')}
+                  disabled={savingNotifications}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="mentions" className="font-medium">
+                    Forum Mentions
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Get notified when someone mentions you in a post
+                  </p>
+                </div>
+                <Checkbox
+                  id="mentions"
+                  checked={notificationPrefs.email_mentions}
+                  onCheckedChange={() => handleNotificationToggle('email_mentions')}
+                  disabled={savingNotifications}
+                />
+              </div>
+
+              {savingNotifications && (
+                <p className="text-sm text-muted-foreground flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving...
+                </p>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>

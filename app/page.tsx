@@ -5,8 +5,17 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Trophy, MessageSquare, TrendingUp, Calendar, ChevronRight, Sparkles, Loader2 } from 'lucide-react';
+import {
+  Trophy,
+  MessageSquare,
+  TrendingUp,
+  Calendar,
+  ChevronRight,
+  Sparkles,
+  Loader2,
+} from 'lucide-react';
 import { LiveGameBanner } from '@/components/live/LiveGameBanner';
+import { FirstPredictionPrompt } from '@/components/onboarding/FirstPredictionPrompt';
 
 interface UpcomingGame {
   gamePk: number;
@@ -104,7 +113,9 @@ export default function HomePage() {
         }
         if (standingsData.standings) {
           // Find Mariners in standings
-          const mariners = standingsData.standings.find((t: Standings) => t.team.name.includes('Mariners'));
+          const mariners = standingsData.standings.find((t: Standings) =>
+            t.team.name.includes('Mariners')
+          );
           setStandings(mariners || null);
         }
       } catch (error) {
@@ -120,6 +131,11 @@ export default function HomePage() {
       {/* Live Game Banner */}
       <section className="mb-6">
         <LiveGameBanner />
+      </section>
+
+      {/* First Prediction Prompt for new users */}
+      <section className="mb-6">
+        <FirstPredictionPrompt />
       </section>
 
       {/* Hero Section */}
@@ -198,7 +214,11 @@ export default function HomePage() {
                             {game.isHome ? 'vs' : '@'} {game.opponent}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {new Date(game.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                            {new Date(game.date).toLocaleDateString('en-US', {
+                              weekday: 'short',
+                              month: 'short',
+                              day: 'numeric',
+                            })}
                           </p>
                         </div>
                       </div>
@@ -211,7 +231,9 @@ export default function HomePage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-center py-8 text-muted-foreground">No upcoming games scheduled</p>
+                <p className="text-center py-8 text-muted-foreground">
+                  No upcoming games scheduled
+                </p>
               )}
             </CardContent>
           </Card>
@@ -261,7 +283,9 @@ export default function HomePage() {
                 <div className="text-center py-8">
                   <p className="text-muted-foreground">No forum posts yet</p>
                   <Link href="/forum" className="mt-2 inline-block">
-                    <Button variant="outline" size="sm">Start a discussion</Button>
+                    <Button variant="outline" size="sm">
+                      Start a discussion
+                    </Button>
                   </Link>
                 </div>
               )}
@@ -304,8 +328,12 @@ export default function HomePage() {
                           {index + 1}
                         </div>
                         <div>
-                          <p className="font-medium">{entry.user?.display_name || entry.user?.username || 'Anonymous'}</p>
-                          <p className="text-xs text-muted-foreground">{entry.accuracy}% accuracy</p>
+                          <p className="font-medium">
+                            {entry.user?.display_name || entry.user?.username || 'Anonymous'}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {entry.accuracy}% accuracy
+                          </p>
                         </div>
                       </div>
                       <span className="font-semibold text-mariners-teal">{entry.total_points}</span>
@@ -313,7 +341,9 @@ export default function HomePage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-center py-8 text-muted-foreground">No predictions yet. Be the first!</p>
+                <p className="text-center py-8 text-muted-foreground">
+                  No predictions yet. Be the first!
+                </p>
               )}
               <Link href="/predictions?tab=leaderboard" className="block mt-4">
                 <Button variant="outline" className="w-full">
@@ -396,15 +426,29 @@ export default function HomePage() {
                   <p className="text-sm text-white/70">Losses</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-3xl font-bold">{standings ? (standings.gamesBack === '-' ? '1st' : `${standings.gamesBack} GB`) : '--'}</p>
+                  <p className="text-3xl font-bold">
+                    {standings
+                      ? standings.gamesBack === '-'
+                        ? '1st'
+                        : `${standings.gamesBack} GB`
+                      : '--'}
+                  </p>
                   <p className="text-sm text-white/70">AL West</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-3xl font-bold">{standings ? `${((standings.wins / (standings.wins + standings.losses)) * 100).toFixed(0)}%` : '--'}</p>
+                  <p className="text-3xl font-bold">
+                    {standings
+                      ? `${((standings.wins / (standings.wins + standings.losses)) * 100).toFixed(0)}%`
+                      : '--'}
+                  </p>
                   <p className="text-sm text-white/70">Win %</p>
                 </div>
               </div>
-              {!standings && <p className="mt-4 text-center text-sm text-white/70">Season starts in Spring 2026</p>}
+              {!standings && (
+                <p className="mt-4 text-center text-sm text-white/70">
+                  Season starts in Spring 2026
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>

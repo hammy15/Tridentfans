@@ -9,6 +9,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar } from '@/components/ui/avatar';
 import { MessageSquare, ThumbsUp, Clock, ArrowLeft, Loader2, LogIn, Send } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { ShareButton } from '@/components/common/ShareButton';
+import { getForumPostShareData } from '@/lib/share';
 import type { ForumPost, ForumComment } from '@/types';
 
 interface PostWithComments extends ForumPost {
@@ -163,6 +165,13 @@ export default function PostPage({ params }: { params: Promise<{ postId: string 
                   <MessageSquare className="h-4 w-4" />
                   {post.comments?.length || 0} comments
                 </div>
+                <ShareButton
+                  data={getForumPostShareData({
+                    id: post.id,
+                    title: post.title,
+                    content: post.content,
+                  })}
+                />
               </div>
             </div>
           </div>

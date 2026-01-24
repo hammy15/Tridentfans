@@ -1,4 +1,11 @@
 // User & Profile Types
+export interface NotificationPreferences {
+  email_game_reminders: boolean;
+  email_prediction_results: boolean;
+  email_weekly_digest: boolean;
+  email_mentions: boolean;
+}
+
 export interface Profile {
   id: string;
   username: string;
@@ -7,6 +14,8 @@ export interface Profile {
   bio: string | null;
   created_at: string;
   role: 'user' | 'moderator' | 'admin';
+  email?: string;
+  notification_preferences?: NotificationPreferences;
 }
 
 // Bot Types

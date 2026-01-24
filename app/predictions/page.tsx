@@ -21,6 +21,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import type { PredictionGame, UserPrediction, LeaderboardEntry } from '@/types';
 import { BotVsHumanLeaderboard } from '@/components/predictions/BotVsHumanLeaderboard';
+import { ShareButton } from '@/components/common/ShareButton';
+import { getPredictionShareData, getLeaderboardShareData } from '@/lib/share';
 
 // Mock data for when database is empty
 const mockGames = [
@@ -411,11 +413,29 @@ export default function PredictionsPage() {
         <TabsContent value="leaderboard">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Medal className="h-5 w-5 text-mariners-gold" />
-                Season Leaderboard
-              </CardTitle>
-              <CardDescription>Top predictors for the 2026 season</CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Medal className="h-5 w-5 text-mariners-gold" />
+                    Season Leaderboard
+                  </CardTitle>
+                  <CardDescription>Top predictors for the 2026 season</CardDescription>
+                </div>
+                {profile && displayLeaderboard.find(e => e.username === profile.username) && (
+                  <ShareButton
+                    data={getLeaderboardShareData({
+                      rank: displayLeaderboard.findIndex(e => e.username === profile.username) + 1,
+                      points:
+                        displayLeaderboard.find(e => e.username === profile.username)?.points || 0,
+                      accuracy:
+                        displayLeaderboard.find(e => e.username === profile.username)?.accuracy ||
+                        0,
+                    })}
+                    variant="mariners"
+                    size="sm"
+                  />
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -533,14 +553,25 @@ export default function PredictionsPage() {
                           </p>
                         )}
                       </div>
-                      {entry.score !== null && (
-                        <Badge
-                          variant={entry.score >= 10 ? 'default' : 'secondary'}
-                          className="ml-4"
-                        >
-                          +{entry.score} pts
-                        </Badge>
-                      )}
+                      <div className="flex items-center gap-2 ml-4">
+                        {entry.score !== null && (
+                          <Badge variant={entry.score >= 10 ? 'default' : 'secondary'}>
+                            +{entry.score} pts
+                          </Badge>
+                        )}
+                        <ShareButton
+                          data={getPredictionShareData({
+                            winner: entry.predictions.winner,
+                            marinersRuns: entry.predictions.mariners_runs,
+                            opponentRuns: entry.predictions.opponent_runs,
+                            opponent: entry.game?.opponent || 'Opponent',
+                            gameDate: entry.game?.game_date || '',
+                          })}
+                          size="icon"
+                          showLabel={false}
+                          variant="ghost"
+                        />
+                      </div>
                     </div>
                   ))}
                 </div>
