@@ -23,8 +23,9 @@ import {
   CheckCircle,
   Loader2,
   Calendar,
-  History,
   GitCompare,
+  UserCheck,
+  Mail,
 } from 'lucide-react';
 import { DEFAULT_BOT_CONFIGS, BOT_PRESETS } from '@/lib/ai-bots';
 import type { BotId, BotTraits } from '@/types';
@@ -35,6 +36,10 @@ import { GameThreadManager } from '@/components/admin/GameThreadManager';
 import { HistoryAdmin } from '@/components/admin/HistoryAdmin';
 import { PlayerCompareAdmin } from '@/components/admin/PlayerCompareAdmin';
 import { ProspectsAdmin } from '@/components/admin/ProspectsAdmin';
+import { PollsAdmin } from '@/components/admin/PollsAdmin';
+import { NotificationAdmin } from '@/components/admin/NotificationAdmin';
+import { AdminLayout, AdminPlaceholder, type AdminSection } from '@/components/admin/AdminLayout';
+import { AdminSettings } from '@/components/admin/AdminSettings';
 
 const _botIds: BotId[] = ['moose', 'captain_hammy', 'spartan'];
 
@@ -587,12 +592,16 @@ export default function AdminPage() {
             Analytics
           </TabsTrigger>
           <TabsTrigger value="history">
-            <History className="mr-2 h-4 w-4" />
+            <Calendar className="mr-2 h-4 w-4" />
             History
           </TabsTrigger>
           <TabsTrigger value="player-compare">
             <GitCompare className="mr-2 h-4 w-4" />
             Player Compare
+          </TabsTrigger>
+          <TabsTrigger value="prospects">
+            <UserCheck className="mr-2 h-4 w-4" />
+            Prospects
           </TabsTrigger>
         </TabsList>
 
@@ -698,6 +707,11 @@ export default function AdminPage() {
         {/* Player Compare Tab */}
         <TabsContent value="player-compare">
           <PlayerCompareAdmin />
+        </TabsContent>
+
+        {/* Prospects Tab */}
+        <TabsContent value="prospects">
+          <ProspectsAdmin adminPassword={adminPassword} />
         </TabsContent>
       </Tabs>
     </div>

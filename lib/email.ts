@@ -1,4 +1,8 @@
 import { Resend } from 'resend';
+import { render } from '@react-email/components';
+import { createClient } from '@supabase/supabase-js';
+import { WeeklyDigestEmail } from './email-templates/weekly-digest';
+import type { DigestContent, EmailPreferences, Profile } from '@/types';
 
 const FROM_EMAIL = 'TridentFans <notifications@tridentfans.com>';
 
@@ -431,5 +435,388 @@ export function mentionNotificationEmail(
     subject: `${mentionedBy} mentioned you in "${postTitle}"`,
     html: emailWrapper(content),
     text: `${mentionedBy} mentioned you in "${postTitle}": "${snippet}..." View the post at ${SITE_URL}/forum/post/${postId}`,
+  };
+}
+
+// ============================================
+// WEEKLY DIGEST SYSTEM
+// ============================================
+
+/**
+ * Get Supabase client for server-side operations
+ */
+function getSupabaseClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}
+
+/**
+ * Generate personalized digest content for a user
+ */
+export async function generateDigestContent(userId: string): Promise<DigestContent | null> {
+  const supabase = getSupabaseClient();
+
+  try {
+    // Get date range for this week
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const weekAgoStr = weekAgo.toISOString().split('T')[0];
+
+    // Fetch user's predictions this week
+    const { data: predictions } = await supabase
+      .from('user_predictions')
+      .select('*, game:prediction_games(*)')
+      .eq('user_id', userId)
+      .gte('submitted_at', weekAgoStr);
+
+    const predictionsThisWeek = predictions?.length || 0;
+    const correctPredictions =
+      predictions?.filter(p => p.score !== null && p.score > 0).length || 0;
+    const pointsEarnedThisWeek =
+      predictions?.reduce((sum, p) => sum + (p.score || 0), 0) || 0;
+
+    // Get current leaderboard position
+    const currentSeason = new Date().getFullYear();
+    const { data: leaderboardEntry } = await supabase
+      .from('prediction_leaderboard')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('season', currentSeason)
+      .single();
+
+    const currentRank = leaderboardEntry?.rank || 999;
+    const totalPoints = leaderboardEntry?.total_points || 0;
+
+    // TODO: Get previous rank for comparison (would need historical data)
+    const rankChange = 0;
+
+    // Get hot forum topics (most commented this week)
+    const { data: hotPosts } = await supabase
+      .from('forum_posts')
+      .select('id, title, user_id, author:profiles(username)')
+      .gte('created_at', weekAgoStr)
+      .order('upvotes', { ascending: false })
+      .limit(5);
+
+    // Get comment counts for posts
+    const hotTopics = await Promise.all(
+      (hotPosts || []).map(async post => {
+        const { count } = await supabase
+          .from('forum_comments')
+          .select('*', { count: 'exact', head: true })
+          .eq('post_id', post.id);
+
+        const authorData = post.author as unknown;
+        const authorUsername = Array.isArray(authorData)
+          ? (authorData[0] as { username?: string })?.username
+          : (authorData as { username?: string } | null)?.username;
+
+        return {
+          id: post.id,
+          title: post.title,
+          commentCount: count || 0,
+          author: authorUsername || 'Unknown',
+        };
+      })
+    );
+
+    // Get upcoming games (next 7 days)
+    const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const todayStr = now.toISOString().split('T')[0];
+    const nextWeekStr = nextWeek.toISOString().split('T')[0];
+
+    const { data: upcomingGames } = await supabase
+      .from('prediction_games')
+      .select('*')
+      .gte('game_date', todayStr)
+      .lte('game_date', nextWeekStr)
+      .eq('status', 'scheduled')
+      .order('game_date')
+      .limit(5);
+
+    // Get "On This Day" moment
+    const today = new Date();
+    const { data: historicalMoment } = await supabase
+      .from('historical_moments')
+      .select('*')
+      .eq('date_month', today.getMonth() + 1)
+      .eq('date_day', today.getDate())
+      .limit(1)
+      .single();
+
+    return {
+      predictionsThisWeek,
+      correctPredictions,
+      accuracyThisWeek:
+        predictionsThisWeek > 0
+          ? Math.round((correctPredictions / predictionsThisWeek) * 100)
+          : 0,
+      pointsEarnedThisWeek,
+      currentRank,
+      rankChange,
+      totalPoints,
+      hotTopics: hotTopics.slice(0, 3),
+      upcomingGames:
+        upcomingGames?.map(game => ({
+          id: game.id,
+          opponent: game.opponent,
+          gameDate: game.game_date,
+          gameTime: game.game_time,
+          isHome: game.is_home,
+        })) || [],
+      onThisDay: historicalMoment
+        ? {
+            year: historicalMoment.year,
+            title: historicalMoment.title,
+            description: historicalMoment.description,
+          }
+        : undefined,
+    };
+  } catch (error) {
+    console.error('[Email] Failed to generate digest content:', error);
+    return null;
+  }
+}
+
+/**
+ * Send weekly digest email to a single user
+ */
+export async function sendDigest(
+  userId: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = getSupabaseClient();
+
+  try {
+    // Get user profile and email preferences
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (!profile) {
+      return { success: false, error: 'User not found' };
+    }
+
+    // Get email preferences
+    const { data: emailPrefs } = await supabase
+      .from('email_preferences')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (!emailPrefs?.weekly_digest) {
+      return { success: false, error: 'User has disabled weekly digest' };
+    }
+
+    if (!emailPrefs.email_verified) {
+      return { success: false, error: 'Email not verified' };
+    }
+
+    // Get user's email
+    const { data: authUser } = await supabase.auth.admin.getUserById(userId);
+    const email = authUser?.user?.email;
+
+    if (!email) {
+      return { success: false, error: 'User email not found' };
+    }
+
+    // Generate digest content
+    const content = await generateDigestContent(userId);
+
+    if (!content) {
+      return { success: false, error: 'Failed to generate digest content' };
+    }
+
+    // Render the email template
+    const emailHtml = await render(
+      WeeklyDigestEmail({
+        user: {
+          username: profile.username,
+          display_name: profile.display_name,
+        },
+        content,
+        unsubscribeToken: emailPrefs.unsubscribe_token,
+        siteUrl: SITE_URL,
+      })
+    );
+
+    // Send the email
+    const result = await sendEmail({
+      to: email,
+      subject: 'Your TridentFans Weekly Digest',
+      html: emailHtml,
+      text: `Your TridentFans Weekly Digest - ${content.predictionsThisWeek} predictions this week, ${content.accuracyThisWeek}% accuracy. View at ${SITE_URL}`,
+    });
+
+    if (result.success) {
+      // Log the sent digest
+      await supabase.from('digest_logs').insert({
+        user_id: userId,
+        email_type: 'weekly_digest',
+        sent_at: new Date().toISOString(),
+        metadata: { predictions: content.predictionsThisWeek, rank: content.currentRank },
+      });
+    }
+
+    return result;
+  } catch (error) {
+    console.error('[Email] Failed to send digest:', error);
+    return { success: false, error: 'Failed to send digest' };
+  }
+}
+
+/**
+ * Send weekly digest to multiple users (batch)
+ */
+export async function sendBulkDigest(
+  userIds: string[]
+): Promise<{ sent: number; failed: number; errors: string[] }> {
+  const results = {
+    sent: 0,
+    failed: 0,
+    errors: [] as string[],
+  };
+
+  // Process in batches of 10 to avoid rate limiting
+  const batchSize = 10;
+  for (let i = 0; i < userIds.length; i += batchSize) {
+    const batch = userIds.slice(i, i + batchSize);
+
+    await Promise.all(
+      batch.map(async userId => {
+        const result = await sendDigest(userId);
+        if (result.success) {
+          results.sent++;
+        } else {
+          results.failed++;
+          if (result.error) {
+            results.errors.push(`${userId}: ${result.error}`);
+          }
+        }
+      })
+    );
+
+    // Small delay between batches to respect rate limits
+    if (i + batchSize < userIds.length) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Get users who should receive digest on a specific day
+ */
+export async function getUsersForDigestDay(
+  day: 'monday' | 'friday' | 'sunday'
+): Promise<string[]> {
+  const supabase = getSupabaseClient();
+
+  const { data: prefs } = await supabase
+    .from('email_preferences')
+    .select('user_id')
+    .eq('weekly_digest', true)
+    .eq('email_verified', true)
+    .eq('digest_day', day);
+
+  return prefs?.map(p => p.user_id) || [];
+}
+
+/**
+ * Generate a unique unsubscribe token
+ */
+export function generateUnsubscribeToken(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let token = '';
+  for (let i = 0; i < 32; i++) {
+    token += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return token;
+}
+
+/**
+ * Create default email preferences for a new user
+ */
+export async function createDefaultEmailPreferences(
+  userId: string
+): Promise<EmailPreferences | null> {
+  const supabase = getSupabaseClient();
+
+  const defaults: Omit<EmailPreferences, 'created_at' | 'updated_at'> = {
+    user_id: userId,
+    weekly_digest: true,
+    digest_day: 'sunday',
+    include_predictions: true,
+    include_leaderboard: true,
+    include_forum: true,
+    include_news: true,
+    include_upcoming_games: true,
+    email_verified: false,
+    unsubscribe_token: generateUnsubscribeToken(),
+  };
+
+  const { data, error } = await supabase
+    .from('email_preferences')
+    .insert(defaults)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('[Email] Failed to create default preferences:', error);
+    return null;
+  }
+
+  return data;
+}
+
+/**
+ * Get email statistics for admin dashboard
+ */
+export async function getEmailStats(): Promise<{
+  totalSent: number;
+  totalOpened: number;
+  totalClicked: number;
+  openRate: number;
+  clickRate: number;
+  recentDigests: Array<{ date: string; sent: number; opened: number }>;
+}> {
+  const supabase = getSupabaseClient();
+
+  // Get all digest logs
+  const { data: logs } = await supabase
+    .from('digest_logs')
+    .select('*')
+    .eq('email_type', 'weekly_digest')
+    .order('sent_at', { ascending: false });
+
+  const totalSent = logs?.length || 0;
+  const totalOpened = logs?.filter(l => l.opened_at).length || 0;
+  const totalClicked = logs?.filter(l => l.clicked_at).length || 0;
+
+  // Group by date for chart
+  const byDate = new Map<string, { sent: number; opened: number }>();
+  logs?.forEach(log => {
+    const date = log.sent_at.split('T')[0];
+    const existing = byDate.get(date) || { sent: 0, opened: 0 };
+    existing.sent++;
+    if (log.opened_at) existing.opened++;
+    byDate.set(date, existing);
+  });
+
+  const recentDigests = Array.from(byDate.entries())
+    .slice(0, 7)
+    .map(([date, stats]) => ({ date, ...stats }));
+
+  return {
+    totalSent,
+    totalOpened,
+    totalClicked,
+    openRate: totalSent > 0 ? Math.round((totalOpened / totalSent) * 100) : 0,
+    clickRate: totalSent > 0 ? Math.round((totalClicked / totalSent) * 100) : 0,
+    recentDigests,
   };
 }
