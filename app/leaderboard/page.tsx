@@ -9,13 +9,11 @@ import {
   Users,
   Star,
   Loader2,
-  Share2,
-  Filter,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ShareButton } from '@/components/common/ShareButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase-auth';
