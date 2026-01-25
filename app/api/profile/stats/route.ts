@@ -54,6 +54,17 @@ export async function GET(request: NextRequest) {
       .eq('user_id', userId)
       .single();
 
+    // Get streak data
+    const { data: streakData } = await supabase
+      .from('user_streaks')
+      .select('current_streak, longest_streak')
+      .eq('user_id', userId)
+      .single();
+
+    // Calculate wins and losses
+    const wins = scoredPredictions.filter(p => (p.score || 0) >= 10).length;
+    const losses = scoredPredictions.filter(p => p.score !== null && (p.score || 0) < 10).length;
+
     // Get badges
     const { data: badges } = await supabase
       .from('user_badges')
@@ -103,6 +114,10 @@ export async function GET(request: NextRequest) {
         badges: badges?.length || 0,
         totalDonated,
         conversations: conversationCount || 0,
+        currentStreak: streakData?.current_streak || 0,
+        longestStreak: streakData?.longest_streak || 0,
+        wins,
+        losses,
       },
       badges: badges || [],
       recentActivity: {
