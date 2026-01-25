@@ -1,5 +1,7 @@
 import { Metadata } from 'next';
+import { Suspense } from 'react';
 import { PlayerComparisonPage } from './PlayerComparisonPage';
+import { Loader2 } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Player Comparison',
@@ -10,6 +12,18 @@ export const metadata: Metadata = {
   },
 };
 
+function CompareLoading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <Loader2 className="h-8 w-8 animate-spin text-mariners-teal" />
+    </div>
+  );
+}
+
 export default function ComparePage() {
-  return <PlayerComparisonPage />;
+  return (
+    <Suspense fallback={<CompareLoading />}>
+      <PlayerComparisonPage />
+    </Suspense>
+  );
 }
