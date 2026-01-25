@@ -4,6 +4,7 @@ import { Footer } from '@/components/layout/Footer';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { PWAProvider } from '@/components/pwa/PWAProvider';
 import { WelcomeModal } from '@/components/onboarding/WelcomeModal';
+import { QuickTour } from '@/components/onboarding/QuickTour';
 import './globals.css';
 
 export const viewport: Viewport = {
@@ -80,7 +81,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <main className="flex-1">{children}</main>
               <Footer />
             </div>
-            <WelcomeModal />
+            <QuickTour />
           </PWAProvider>
         </AuthProvider>
       </body>

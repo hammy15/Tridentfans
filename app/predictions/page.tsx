@@ -5,27 +5,148 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
 import {
   Trophy,
   Calendar,
-  CheckCircle,
   Clock,
   TrendingUp,
   Medal,
   Loader2,
   LogIn,
   Bot,
+  Check,
+  AlertCircle,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
-import type { PredictionGame, UserPrediction, LeaderboardEntry } from '@/types';
+import type { PredictionGame, LeaderboardEntry } from '@/types';
 import { BotVsHumanLeaderboard } from '@/components/predictions/BotVsHumanLeaderboard';
-import { ShareButton } from '@/components/common/ShareButton';
-import { getPredictionShareData, getLeaderboardShareData } from '@/lib/share';
 
-// Mock data for when database is empty
-const mockGames = [
+interface PredictionOption {
+  id: string;
+  label: string;
+  description: string;
+  options: { value: string; label: string }[];
+  points: number;
+}
+
+const PREDICTION_CATEGORIES: PredictionOption[] = [
+  {
+    id: 'winner',
+    label: '1. Who Wins?',
+    description: 'Pick the winning team',
+    options: [
+      { value: 'mariners', label: 'Mariners' },
+      { value: 'opponent', label: 'Opponent' },
+    ],
+    points: 10,
+  },
+  {
+    id: 'run_differential',
+    label: '2. Run Differential',
+    description: 'How many runs will separate the teams?',
+    options: [
+      { value: '1', label: '1 run' },
+      { value: '2-3', label: '2-3 runs' },
+      { value: '4-5', label: '4-5 runs' },
+      { value: '6+', label: '6+ runs' },
+    ],
+    points: 5,
+  },
+  {
+    id: 'total_runs',
+    label: '3. Total Runs (Over/Under)',
+    description: 'Combined runs scored by both teams',
+    options: [
+      { value: 'under_5', label: 'Under 5' },
+      { value: '5-7', label: '5-7 runs' },
+      { value: '8-10', label: '8-10 runs' },
+      { value: 'over_10', label: 'Over 10' },
+    ],
+    points: 5,
+  },
+  {
+    id: 'first_to_score',
+    label: '4. First to Score',
+    description: 'Which team scores first?',
+    options: [
+      { value: 'mariners', label: 'Mariners' },
+      { value: 'opponent', label: 'Opponent' },
+    ],
+    points: 5,
+  },
+  {
+    id: 'mariners_hits',
+    label: '5. Mariners Total Hits',
+    description: 'How many hits will the Mariners get?',
+    options: [
+      { value: '0-5', label: '0-5 hits' },
+      { value: '6-8', label: '6-8 hits' },
+      { value: '9-11', label: '9-11 hits' },
+      { value: '12+', label: '12+ hits' },
+    ],
+    points: 5,
+  },
+  {
+    id: 'mariners_hr',
+    label: '6. Mariners Home Runs',
+    description: 'How many HRs will the Mariners hit?',
+    options: [
+      { value: '0', label: 'None' },
+      { value: '1', label: '1 HR' },
+      { value: '2', label: '2 HRs' },
+      { value: '3+', label: '3+ HRs' },
+    ],
+    points: 5,
+  },
+  {
+    id: 'total_strikeouts',
+    label: '7. Total Strikeouts',
+    description: 'Combined Ks by both teams',
+    options: [
+      { value: 'under_10', label: 'Under 10' },
+      { value: '10-14', label: '10-14 Ks' },
+      { value: '15-19', label: '15-19 Ks' },
+      { value: '20+', label: '20+ Ks' },
+    ],
+    points: 5,
+  },
+  {
+    id: 'lead_after_5',
+    label: '8. Leading After 5 Innings',
+    description: 'Who leads after 5?',
+    options: [
+      { value: 'mariners', label: 'Mariners' },
+      { value: 'opponent', label: 'Opponent' },
+      { value: 'tie', label: 'Tied' },
+    ],
+    points: 5,
+  },
+  {
+    id: 'extra_innings',
+    label: '9. Extra Innings?',
+    description: 'Will the game go to extras?',
+    options: [
+      { value: 'no', label: 'No' },
+      { value: 'yes', label: 'Yes' },
+    ],
+    points: 10,
+  },
+  {
+    id: 'shutout',
+    label: '10. Shutout?',
+    description: 'Will either team get shut out?',
+    options: [
+      { value: 'no', label: 'No' },
+      { value: 'mariners', label: 'Mariners shutout opponent' },
+      { value: 'opponent', label: 'Opponent shuts out Mariners' },
+    ],
+    points: 10,
+  },
+];
+
+// Mock data
+const mockGames: PredictionGame[] = [
   {
     id: 'mock-1',
     opponent: 'Los Angeles Angels',
@@ -33,7 +154,7 @@ const mockGames = [
     game_date: '2026-01-25',
     game_time: '19:10',
     is_home: true,
-    status: 'scheduled' as const,
+    status: 'scheduled',
     actual_result: null,
   },
   {
@@ -43,17 +164,7 @@ const mockGames = [
     game_date: '2026-01-27',
     game_time: '18:40',
     is_home: false,
-    status: 'scheduled' as const,
-    actual_result: null,
-  },
-  {
-    id: 'mock-3',
-    opponent: 'Houston Astros',
-    opponent_abbr: 'HOU',
-    game_date: '2026-01-30',
-    game_time: '19:10',
-    is_home: true,
-    status: 'scheduled' as const,
+    status: 'scheduled',
     actual_result: null,
   },
 ];
@@ -70,65 +181,35 @@ export default function PredictionsPage() {
   const { user, profile, loading: authLoading } = useAuth();
   const [games, setGames] = useState<PredictionGame[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [history, setHistory] = useState<UserPrediction[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [selectedGame, setSelectedGame] = useState<string | null>(null);
-  const [predictions, setPredictions] = useState({
-    winner: '' as 'mariners' | 'opponent' | '',
-    marinersRuns: '',
-    opponentRuns: '',
-  });
+  const [selectedGame, setSelectedGame] = useState<PredictionGame | null>(null);
+  const [predictions, setPredictions] = useState<Record<string, string>>({});
+  const [submitted, setSubmitted] = useState(false);
 
-  // Fetch games
   useEffect(() => {
-    async function fetchGames() {
+    async function fetchData() {
       try {
-        const res = await fetch('/api/predictions?type=games');
-        const data = await res.json();
-        if (data.games && data.games.length > 0) {
-          setGames(data.games);
-        } else {
-          // Use mock data if no games in database
-          setGames(mockGames as PredictionGame[]);
-        }
-      } catch (error) {
-        console.error('Failed to fetch games:', error);
-        setGames(mockGames as PredictionGame[]);
-      }
-    }
-    fetchGames();
-  }, []);
+        const [gamesRes, leaderboardRes] = await Promise.all([
+          fetch('/api/predictions?type=games'),
+          fetch('/api/predictions?type=leaderboard'),
+        ]);
+        const gamesData = await gamesRes.json();
+        const leaderboardData = await leaderboardRes.json();
 
-  // Fetch leaderboard
-  useEffect(() => {
-    async function fetchLeaderboard() {
-      try {
-        const res = await fetch('/api/predictions?type=leaderboard');
-        const data = await res.json();
-        setLeaderboard(data.leaderboard || []);
-      } catch (error) {
-        console.error('Failed to fetch leaderboard:', error);
+        setGames(gamesData.games?.length > 0 ? gamesData.games : mockGames);
+        setLeaderboard(leaderboardData.leaderboard || []);
+      } catch {
+        setGames(mockGames);
       }
       setLoading(false);
     }
-    fetchLeaderboard();
+    fetchData();
   }, []);
 
-  // Fetch history when user is logged in
-  useEffect(() => {
-    async function fetchHistory() {
-      if (!user) return;
-      try {
-        const res = await fetch(`/api/predictions?type=history&userId=${user.id}`);
-        const data = await res.json();
-        setHistory(data.history || []);
-      } catch (error) {
-        console.error('Failed to fetch history:', error);
-      }
-    }
-    fetchHistory();
-  }, [user]);
+  const handlePredictionChange = (categoryId: string, value: string) => {
+    setPredictions(prev => ({ ...prev, [categoryId]: value }));
+  };
 
   const handleSubmit = async () => {
     if (!user || !selectedGame) return;
@@ -140,12 +221,8 @@ export default function PredictionsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: user.id,
-          gameId: selectedGame,
-          predictions: {
-            winner: predictions.winner,
-            mariners_runs: parseInt(predictions.marinersRuns),
-            opponent_runs: parseInt(predictions.opponentRuns),
-          },
+          gameId: selectedGame.id,
+          predictions,
         }),
       });
 
@@ -153,35 +230,34 @@ export default function PredictionsPage() {
       if (data.error) {
         alert(data.error);
       } else {
-        alert('Prediction submitted successfully!');
-        setSelectedGame(null);
-        setPredictions({ winner: '', marinersRuns: '', opponentRuns: '' });
-        // Refresh history
-        const histRes = await fetch(`/api/predictions?type=history&userId=${user.id}`);
-        const histData = await histRes.json();
-        setHistory(histData.history || []);
+        setSubmitted(true);
       }
-    } catch (error) {
-      console.error('Failed to submit prediction:', error);
+    } catch {
       alert('Failed to submit prediction');
     }
     setSubmitting(false);
   };
 
+  const completedCount = Object.keys(predictions).length;
+  const totalPoints = PREDICTION_CATEGORIES.filter(c => predictions[c.id]).reduce(
+    (sum, c) => sum + c.points,
+    0
+  );
+
   const formatTime = (time: string) => {
     const [hours, minutes] = time.split(':');
     const h = parseInt(hours);
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    const hour12 = h % 12 || 12;
-    return `${hour12}:${minutes} ${ampm} PT`;
+    return `${h % 12 || 12}:${minutes} ${h >= 12 ? 'PM' : 'AM'} PT`;
   };
 
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr + 'T00:00:00');
-    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    });
   };
 
-  // Use mock leaderboard if database is empty
   const displayLeaderboard =
     leaderboard.length > 0
       ? leaderboard.map((e, i) => ({
@@ -195,14 +271,13 @@ export default function PredictionsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold flex items-center gap-3">
           <Trophy className="h-8 w-8 text-mariners-teal" />
           Predictions
         </h1>
         <p className="mt-2 text-muted-foreground">
-          Make your picks and compete for the top of the leaderboard
+          Make 10 predictions per game • All picks lock at first pitch
         </p>
       </div>
 
@@ -214,231 +289,233 @@ export default function PredictionsPage() {
             <Bot className="h-4 w-4 mr-1" />
             Bot vs Human
           </TabsTrigger>
-          <TabsTrigger value="history">My History</TabsTrigger>
         </TabsList>
 
-        {/* Make Predictions Tab */}
         <TabsContent value="predict">
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* Upcoming Games */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-mariners-teal" />
-                  Upcoming Games
-                </CardTitle>
-                <CardDescription>Select a game to make your prediction</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="flex justify-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-mariners-teal" />
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {games.map(game => (
-                      <div
-                        key={game.id}
-                        onClick={() => setSelectedGame(game.id)}
-                        className={`cursor-pointer rounded-lg border p-4 transition-all ${
-                          selectedGame === game.id
-                            ? 'border-mariners-teal bg-accent'
-                            : 'hover:border-mariners-teal/50 hover:bg-muted/50'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-mariners-navy text-white font-bold text-sm">
-                              {game.opponent_abbr}
-                            </div>
-                            <div>
-                              <p className="font-medium">
-                                {game.is_home ? 'vs' : '@'} {game.opponent}
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                {formatDate(game.game_date)} • {formatTime(game.game_time)}
-                              </p>
-                            </div>
-                          </div>
-                          <Badge variant="secondary">
-                            <Clock className="mr-1 h-3 w-3" />
-                            Open
-                          </Badge>
+          {!selectedGame ? (
+            /* Game Selection */
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {loading ? (
+                <div className="col-span-full flex justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-mariners-teal" />
+                </div>
+              ) : (
+                games.map(game => (
+                  <Card
+                    key={game.id}
+                    className="cursor-pointer hover:border-mariners-teal transition-colors"
+                    onClick={() => {
+                      setSelectedGame(game);
+                      setPredictions({});
+                      setSubmitted(false);
+                    }}
+                  >
+                    <CardContent className="p-6">
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="h-14 w-14 rounded-xl bg-mariners-navy text-white flex items-center justify-center text-lg font-bold">
+                          {game.opponent_abbr}
+                        </div>
+                        <div>
+                          <p className="text-lg font-semibold">
+                            {game.is_home ? 'vs' : '@'} {game.opponent}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {formatDate(game.game_date)}
+                          </p>
                         </div>
                       </div>
-                    ))}
-                    {games.length === 0 && (
-                      <p className="text-center text-muted-foreground py-8">
-                        No upcoming games available for predictions
-                      </p>
-                    )}
-                  </div>
-                )}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Clock className="h-4 w-4" />
+                          {formatTime(game.game_time)}
+                        </div>
+                        <Badge variant="secondary">10 picks available</Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+              {!loading && games.length === 0 && (
+                <div className="col-span-full text-center py-12 text-muted-foreground">
+                  No upcoming games available
+                </div>
+              )}
+            </div>
+          ) : submitted ? (
+            /* Success State */
+            <Card className="max-w-lg mx-auto">
+              <CardContent className="p-8 text-center">
+                <div className="h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-4">
+                  <Check className="h-8 w-8 text-green-600" />
+                </div>
+                <h2 className="text-2xl font-bold mb-2">Predictions Submitted!</h2>
+                <p className="text-muted-foreground mb-6">
+                  You made {completedCount} predictions worth up to {totalPoints} points.
+                  <br />
+                  Results will be scored after the game ends.
+                </p>
+                <div className="flex gap-3 justify-center">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSelectedGame(null);
+                      setSubmitted(false);
+                    }}
+                  >
+                    Pick Another Game
+                  </Button>
+                  <Link href="/forum">
+                    <Button variant="mariners">Discuss in Forum</Button>
+                  </Link>
+                </div>
               </CardContent>
             </Card>
-
-            {/* Prediction Form */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Your Prediction</CardTitle>
-                <CardDescription>
-                  {selectedGame
-                    ? 'Make your picks for this game'
-                    : 'Select a game to make predictions'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {!authLoading && !user ? (
-                  <div className="text-center py-12">
-                    <LogIn className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <p className="text-muted-foreground mb-4">Sign in to make predictions</p>
-                    <Link href="/auth/login">
-                      <Button variant="mariners">Sign In</Button>
-                    </Link>
+          ) : (
+            /* Prediction Form */
+            <div className="max-w-2xl mx-auto">
+              {/* Game Header */}
+              <Card className="mb-6">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="h-12 w-12 rounded-lg bg-mariners-navy text-white flex items-center justify-center font-bold">
+                        {selectedGame.opponent_abbr}
+                      </div>
+                      <div>
+                        <p className="font-semibold">
+                          {selectedGame.is_home ? 'vs' : '@'} {selectedGame.opponent}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {formatDate(selectedGame.game_date)} • {formatTime(selectedGame.game_time)}
+                        </p>
+                      </div>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => setSelectedGame(null)}>
+                      Change Game
+                    </Button>
                   </div>
-                ) : selectedGame ? (
-                  <div className="space-y-6">
-                    {/* Winner Selection */}
-                    <div>
-                      <label className="text-sm font-medium mb-3 block">Who will win?</label>
-                      <div className="grid grid-cols-2 gap-4">
-                        <button
-                          onClick={() => setPredictions({ ...predictions, winner: 'mariners' })}
-                          className={`p-4 rounded-lg border-2 transition-all ${
-                            predictions.winner === 'mariners'
-                              ? 'border-mariners-teal bg-mariners-teal/10'
-                              : 'border-muted hover:border-mariners-teal/50'
-                          }`}
-                        >
-                          <div className="text-2xl mb-1">🔱</div>
-                          <p className="font-medium">Mariners</p>
-                        </button>
-                        <button
-                          onClick={() => setPredictions({ ...predictions, winner: 'opponent' })}
-                          className={`p-4 rounded-lg border-2 transition-all ${
-                            predictions.winner === 'opponent'
-                              ? 'border-mariners-navy bg-mariners-navy/10'
-                              : 'border-muted hover:border-mariners-navy/50'
-                          }`}
-                        >
-                          <div className="text-2xl mb-1">
-                            {games.find(g => g.id === selectedGame)?.opponent_abbr || 'OPP'}
-                          </div>
-                          <p className="font-medium">Opponent</p>
-                        </button>
-                      </div>
-                    </div>
+                </CardContent>
+              </Card>
 
-                    {/* Score Prediction */}
-                    <div>
-                      <label className="text-sm font-medium mb-3 block">Predicted Score</label>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="text-xs text-muted-foreground mb-1 block">
-                            Mariners Runs
-                          </label>
-                          <Input
-                            type="number"
-                            min="0"
-                            max="30"
-                            value={predictions.marinersRuns}
-                            onChange={e =>
-                              setPredictions({
-                                ...predictions,
-                                marinersRuns: e.target.value,
-                              })
-                            }
-                            placeholder="0"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs text-muted-foreground mb-1 block">
-                            Opponent Runs
-                          </label>
-                          <Input
-                            type="number"
-                            min="0"
-                            max="30"
-                            value={predictions.opponentRuns}
-                            onChange={e =>
-                              setPredictions({
-                                ...predictions,
-                                opponentRuns: e.target.value,
-                              })
-                            }
-                            placeholder="0"
-                          />
-                        </div>
-                      </div>
+              {/* Login prompt */}
+              {!authLoading && !user && (
+                <Card className="mb-6 border-yellow-500/50 bg-yellow-50 dark:bg-yellow-900/10">
+                  <CardContent className="p-4 flex items-center gap-4">
+                    <AlertCircle className="h-5 w-5 text-yellow-600" />
+                    <div className="flex-1">
+                      <p className="font-medium">Sign in to save your predictions</p>
+                      <p className="text-sm text-muted-foreground">
+                        Your picks won&apos;t be saved without an account
+                      </p>
                     </div>
+                    <Link href="/auth/login">
+                      <Button variant="outline" size="sm">
+                        <LogIn className="h-4 w-4 mr-2" />
+                        Sign In
+                      </Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              )}
 
-                    {/* Submit */}
+              {/* Progress */}
+              <div className="mb-6 p-4 bg-muted/50 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium">
+                    {completedCount} of 10 predictions made
+                  </span>
+                  <span className="text-sm text-mariners-teal font-semibold">
+                    {totalPoints} pts possible
+                  </span>
+                </div>
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-mariners-teal transition-all"
+                    style={{ width: `${(completedCount / 10) * 100}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Prediction Categories */}
+              <div className="space-y-4">
+                {PREDICTION_CATEGORIES.map(category => (
+                  <Card
+                    key={category.id}
+                    className={predictions[category.id] ? 'border-mariners-teal/50' : ''}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h3 className="font-semibold">{category.label}</h3>
+                          <p className="text-sm text-muted-foreground">{category.description}</p>
+                        </div>
+                        <Badge variant="outline" className="shrink-0">
+                          {category.points} pts
+                        </Badge>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {category.options.map(option => (
+                          <button
+                            key={option.value}
+                            onClick={() => handlePredictionChange(category.id, option.value)}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                              predictions[category.id] === option.value
+                                ? 'bg-mariners-teal text-white'
+                                : 'bg-muted hover:bg-muted/80'
+                            }`}
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Submit */}
+              <div className="mt-6 sticky bottom-4">
+                <Card className="shadow-lg">
+                  <CardContent className="p-4 flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">{completedCount}/10 predictions</p>
+                      <p className="text-sm text-muted-foreground">
+                        Locks at {formatTime(selectedGame.game_time)}
+                      </p>
+                    </div>
                     <Button
                       variant="mariners"
-                      className="w-full"
-                      disabled={
-                        !predictions.winner ||
-                        !predictions.marinersRuns ||
-                        !predictions.opponentRuns ||
-                        submitting
-                      }
+                      size="lg"
+                      disabled={completedCount === 0 || !user || submitting}
                       onClick={handleSubmit}
                     >
                       {submitting ? (
                         <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                           Submitting...
                         </>
                       ) : (
-                        'Submit Prediction'
+                        'Submit Predictions'
                       )}
                     </Button>
-
-                    <p className="text-xs text-center text-muted-foreground">
-                      Predictions close 30 minutes before game time
-                    </p>
-                  </div>
-                ) : (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <Trophy className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>Select a game from the list to make your prediction</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          )}
         </TabsContent>
 
-        {/* Leaderboard Tab */}
         <TabsContent value="leaderboard">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Medal className="h-5 w-5 text-mariners-gold" />
-                    Season Leaderboard
-                  </CardTitle>
-                  <CardDescription>Top predictors for the 2026 season</CardDescription>
-                </div>
-                {profile && displayLeaderboard.find(e => e.username === profile.username) && (
-                  <ShareButton
-                    data={getLeaderboardShareData({
-                      rank: displayLeaderboard.findIndex(e => e.username === profile.username) + 1,
-                      points:
-                        displayLeaderboard.find(e => e.username === profile.username)?.points || 0,
-                      accuracy:
-                        displayLeaderboard.find(e => e.username === profile.username)?.accuracy ||
-                        0,
-                    })}
-                    variant="mariners"
-                    size="sm"
-                  />
-                )}
-              </div>
+              <CardTitle className="flex items-center gap-2">
+                <Medal className="h-5 w-5 text-yellow-500" />
+                Season Leaderboard
+              </CardTitle>
+              <CardDescription>Top predictors for the 2026 season</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {displayLeaderboard.map(entry => (
                   <div
                     key={entry.rank}
@@ -463,16 +540,14 @@ export default function PredictionsPage() {
                               ? 'bg-gray-400 text-white'
                               : entry.rank === 3
                                 ? 'bg-amber-700 text-white'
-                                : 'bg-muted text-foreground'
+                                : 'bg-muted'
                         }`}
                       >
                         {entry.rank}
                       </div>
                       <div>
                         <p className="font-medium">{entry.username}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {entry.predictions} predictions • {entry.accuracy}% accuracy
-                        </p>
+                        <p className="text-sm text-muted-foreground">{entry.accuracy}% accuracy</p>
                       </div>
                     </div>
                     <div className="text-right">
@@ -486,98 +561,8 @@ export default function PredictionsPage() {
           </Card>
         </TabsContent>
 
-        {/* Bot vs Human Tab */}
         <TabsContent value="bot-vs-human">
           <BotVsHumanLeaderboard />
-        </TabsContent>
-
-        {/* History Tab */}
-        <TabsContent value="history">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-mariners-teal" />
-                My Prediction History
-              </CardTitle>
-              <CardDescription>Track your past predictions and scores</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {!user ? (
-                <div className="text-center py-12">
-                  <LogIn className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-muted-foreground mb-4">Sign in to view your history</p>
-                  <Link href="/auth/login">
-                    <Button variant="mariners">Sign In</Button>
-                  </Link>
-                </div>
-              ) : history.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">
-                  No prediction history yet. Make your first prediction!
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {history.map(entry => (
-                    <div
-                      key={entry.id}
-                      className="flex items-center justify-between p-4 rounded-lg border"
-                    >
-                      <div className="flex items-center gap-4">
-                        {entry.score !== null && entry.score >= 10 ? (
-                          <CheckCircle className="h-6 w-6 text-green-500" />
-                        ) : entry.score !== null ? (
-                          <div className="h-6 w-6 rounded-full bg-red-100 flex items-center justify-center">
-                            <span className="text-red-500 text-xs">✗</span>
-                          </div>
-                        ) : (
-                          <Clock className="h-6 w-6 text-muted-foreground" />
-                        )}
-                        <div>
-                          <p className="font-medium">
-                            {entry.game?.is_home ? 'vs' : '@'} {entry.game?.opponent}
-                          </p>
-                          <p className="text-sm text-muted-foreground">{entry.game?.game_date}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm">
-                          Predicted:{' '}
-                          <span className="font-medium">
-                            {entry.predictions.winner === 'mariners' ? 'Mariners' : 'Opponent'} (
-                            {entry.predictions.mariners_runs}-{entry.predictions.opponent_runs})
-                          </span>
-                        </p>
-                        {entry.game?.actual_result && (
-                          <p className="text-sm text-muted-foreground">
-                            Actual: {entry.game.actual_result.mariners_runs} -{' '}
-                            {entry.game.actual_result.opponent_runs}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 ml-4">
-                        {entry.score !== null && (
-                          <Badge variant={entry.score >= 10 ? 'default' : 'secondary'}>
-                            +{entry.score} pts
-                          </Badge>
-                        )}
-                        <ShareButton
-                          data={getPredictionShareData({
-                            winner: entry.predictions.winner,
-                            marinersRuns: entry.predictions.mariners_runs,
-                            opponentRuns: entry.predictions.opponent_runs,
-                            opponent: entry.game?.opponent || 'Opponent',
-                            gameDate: entry.game?.game_date || '',
-                          })}
-                          size="icon"
-                          showLabel={false}
-                          variant="ghost"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
         </TabsContent>
       </Tabs>
     </div>
