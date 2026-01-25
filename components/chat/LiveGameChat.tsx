@@ -14,9 +14,9 @@ interface ChatMessage {
   user_id: string;
   message: string;
   created_at: string;
-  profiles?: {
+  profiles: {
     username: string;
-  };
+  } | null;
 }
 
 interface LiveGameChatProps {
@@ -84,8 +84,12 @@ export function LiveGameChat({ gameId }: LiveGameChatProps) {
         .limit(100);
 
       if (!error && data) {
-        // Reverse to show oldest first, newest at bottom
-        setMessages(data.reverse() as ChatMessage[]);
+        // Transform and reverse to show oldest first, newest at bottom
+        const transformed = data.map((msg) => ({
+          ...msg,
+          profiles: Array.isArray(msg.profiles) ? msg.profiles[0] : msg.profiles,
+        })) as ChatMessage[];
+        setMessages(transformed.reverse());
       }
     }
 
@@ -138,9 +142,14 @@ export function LiveGameChat({ gameId }: LiveGameChatProps) {
               .single();
 
             if (data) {
+              const transformedMsg = {
+                ...data,
+                profiles: Array.isArray(data.profiles) ? data.profiles[0] : data.profiles,
+              } as ChatMessage;
+
               setMessages((prev) => {
                 // Keep only last 100 messages
-                const updated = [...prev, data as ChatMessage];
+                const updated = [...prev, transformedMsg];
                 if (updated.length > 100) {
                   return updated.slice(-100);
                 }

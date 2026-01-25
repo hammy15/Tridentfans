@@ -11,14 +11,14 @@ interface TabsContextValue {
 const TabsContext = React.createContext<TabsContextValue | undefined>(undefined);
 
 interface TabsProps extends React.HTMLAttributes<HTMLDivElement> {
-  defaultValue: string;
+  defaultValue?: string;
   value?: string;
   onValueChange?: (value: string) => void;
 }
 
 const Tabs = React.forwardRef<HTMLDivElement, TabsProps>(
   ({ className, defaultValue, value, onValueChange, children, ...props }, ref) => {
-    const [activeTab, setActiveTab] = React.useState(value ?? defaultValue);
+    const [activeTab, setActiveTab] = React.useState(value ?? defaultValue ?? '');
 
     React.useEffect(() => {
       if (value !== undefined) {
