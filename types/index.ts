@@ -16,6 +16,11 @@ export interface Profile {
   role: 'user' | 'moderator' | 'admin';
   email?: string;
   notification_preferences?: NotificationPreferences;
+  title?: string | null;
+  follower_count?: number;
+  following_count?: number;
+  total_points?: number;
+  prediction_accuracy?: number;
 }
 
 // Bot Types
@@ -212,6 +217,96 @@ export interface NewsItem {
   image_url?: string;
   published_at: string;
   category: 'news' | 'trade' | 'game' | 'analysis';
+}
+
+// Tournament Types
+export type TournamentType = 'weekly' | 'monthly' | 'special';
+export type TournamentStatus = 'upcoming' | 'active' | 'completed';
+
+export interface Tournament {
+  id: string;
+  name: string;
+  description: string | null;
+  tournament_type: TournamentType;
+  start_date: string;
+  end_date: string;
+  prize_description: string | null;
+  status: TournamentStatus;
+  created_at: string;
+}
+
+export interface TournamentParticipant {
+  id: string;
+  tournament_id: string;
+  user_id: string;
+  joined_at: string;
+  final_score: number | null;
+  final_rank: number | null;
+  // Joined
+  user?: Profile;
+  tournament?: Tournament;
+}
+
+// Challenge Types
+export type ChallengeStatus = 'pending' | 'active' | 'declined' | 'completed';
+export type WagerType = 'points' | 'badges' | 'bragging_rights';
+
+export interface Challenge {
+  id: string;
+  challenger_id: string;
+  opponent_id: string;
+  game_id: string;
+  status: ChallengeStatus;
+  wager_amount: number;
+  wager_type: WagerType;
+  message: string | null;
+  challenger_score: number | null;
+  opponent_score: number | null;
+  winner_id: string | null;
+  created_at: string;
+  responded_at: string | null;
+  completed_at: string | null;
+  // Joined
+  challenger?: Profile;
+  opponent?: Profile;
+  game?: PredictionGame;
+}
+
+// Notification Types
+export type NotificationType =
+  | 'badge_earned'
+  | 'prediction_result'
+  | 'mention'
+  | 'follow'
+  | 'comment_reply'
+  | 'tournament_update'
+  | 'challenge_received'
+  | 'challenge_accepted'
+  | 'challenge_result'
+  | 'system';
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  type: NotificationType;
+  title: string;
+  message: string | null;
+  link: string | null;
+  metadata: Record<string, unknown> | null;
+  is_read: boolean;
+  read_at: string | null;
+  created_at: string;
+}
+
+// Follow Types
+export interface UserFollow {
+  id: string;
+  follower_id: string;
+  following_id: string;
+  created_at: string;
+  // Joined
+  follower?: Profile;
+  following?: Profile;
 }
 
 // API Response Types

@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 // Badge definitions with categories
 const BADGE_DEFINITIONS = {
@@ -142,7 +144,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ definitions: BADGE_DEFINITIONS });
     }
 
-    const { data: badges, error } = await supabase
+    const { data: badges, error } = await getSupabase()
       .from('user_badges')
       .select('*')
       .eq('user_id', userId)
@@ -186,7 +188,7 @@ export async function POST(request: NextRequest) {
     const awardedBadges: string[] = [];
 
     // Get existing badges
-    const { data: existingBadges } = await supabase
+    const { data: existingBadges } = await getSupabase()
       .from('user_badges')
       .select('badge_type')
       .eq('user_id', userId);
@@ -194,7 +196,7 @@ export async function POST(request: NextRequest) {
     const hasBadge = (type: string) => existingBadges?.some(b => b.badge_type === type);
 
     // Check forum posts
-    const { count: postCount } = await supabase
+    const { count: postCount } = await getSupabase()
       .from('forum_posts')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId);
@@ -213,7 +215,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check comments
-    const { count: commentCount } = await supabase
+    const { count: commentCount } = await getSupabase()
       .from('forum_comments')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId);
@@ -228,7 +230,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check predictions
-    const { count: predictionCount } = await supabase
+    const { count: predictionCount } = await getSupabase()
       .from('user_predictions')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId);
@@ -239,7 +241,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check prediction accuracy
-    const { data: predictions } = await supabase
+    const { data: predictions } = await getSupabase()
       .from('user_predictions')
       .select('score')
       .eq('user_id', userId)
@@ -255,7 +257,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check leaderboard
-    const { data: leaderboardEntry } = await supabase
+    const { data: leaderboardEntry } = await getSupabase()
       .from('prediction_leaderboard')
       .select('rank')
       .eq('user_id', userId)
@@ -271,7 +273,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check bot conversations
-    const { count: conversationCount } = await supabase
+    const { count: conversationCount } = await getSupabase()
       .from('bot_conversations')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId);
@@ -282,7 +284,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check OG member (joined before Feb 2026)
-    const { data: profile } = await supabase
+    const { data: profile } = await getSupabase()
       .from('profiles')
       .select('created_at')
       .eq('id', userId)
@@ -313,7 +315,7 @@ async function awardBadge(userId: string, badgeType: string) {
   if (!badgeDef) return { error: 'Invalid badge type' };
 
   // Check if already has badge
-  const { data: existing } = await supabase
+  const { data: existing } = await getSupabase()
     .from('user_badges')
     .select('id')
     .eq('user_id', userId)
@@ -322,7 +324,7 @@ async function awardBadge(userId: string, badgeType: string) {
 
   if (existing) return { alreadyHas: true };
 
-  const { data: badge, error } = await supabase
+  const { data: badge, error } = await getSupabase()
     .from('user_badges')
     .insert({
       user_id: userId,

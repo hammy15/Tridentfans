@@ -27,11 +27,11 @@ export async function GET(request: NextRequest) {
     if (type === 'followers') {
       // Get users who follow this user
       query = supabase
-        .from('user_follows')
+        .from('follows')
         .select(`
-          id,
+          follower_id,
           created_at,
-          follower:profiles!user_follows_follower_id_fkey(id, username, display_name, avatar_url)
+          follower:profiles!follows_follower_id_fkey(id, username, display_name, avatar_url)
         `)
         .eq('following_id', userId)
         .order('created_at', { ascending: false })
@@ -39,11 +39,11 @@ export async function GET(request: NextRequest) {
     } else {
       // Get users this user follows
       query = supabase
-        .from('user_follows')
+        .from('follows')
         .select(`
-          id,
+          following_id,
           created_at,
-          following:profiles!user_follows_following_id_fkey(id, username, display_name, avatar_url)
+          following:profiles!follows_following_id_fkey(id, username, display_name, avatar_url)
         `)
         .eq('follower_id', userId)
         .order('created_at', { ascending: false })
@@ -56,20 +56,22 @@ export async function GET(request: NextRequest) {
 
     // Get counts
     const { count: followersCount } = await supabase
-      .from('user_follows')
+      .from('follows')
       .select('*', { count: 'exact', head: true })
       .eq('following_id', userId);
 
     const { count: followingCount } = await supabase
-      .from('user_follows')
+      .from('follows')
       .select('*', { count: 'exact', head: true })
       .eq('follower_id', userId);
 
     // Transform data based on type
     const users = data?.map(item => {
-      const profile = 'follower' in item ? item.follower : item.following;
+      const profile = type === 'followers'
+        ? (item as { follower: unknown }).follower
+        : (item as { following: unknown }).following;
       return {
-        ...profile,
+        ...(profile as Record<string, unknown>),
         followedAt: item.created_at,
       };
     }) || [];
@@ -103,8 +105,8 @@ export async function POST(request: NextRequest) {
 
     // Check if already following
     const { data: existing } = await supabase
-      .from('user_follows')
-      .select('id')
+      .from('follows')
+      .select('follower_id')
       .eq('follower_id', userId)
       .eq('following_id', followingId)
       .single();
@@ -115,7 +117,7 @@ export async function POST(request: NextRequest) {
 
     // Create follow
     const { data: follow, error } = await supabase
-      .from('user_follows')
+      .from('follows')
       .insert({
         follower_id: userId,
         following_id: followingId,
@@ -125,6 +127,13 @@ export async function POST(request: NextRequest) {
 
     if (error) throw error;
 
+    // Get follower info for notification
+    const { data: follower } = await supabase
+      .from('profiles')
+      .select('username, display_name')
+      .eq('id', userId)
+      .single();
+
     // Create notification for the followed user
     await supabase
       .from('notifications')
@@ -132,13 +141,9 @@ export async function POST(request: NextRequest) {
         user_id: followingId,
         type: 'follow',
         title: 'New Follower',
-        message: 'Someone started following you',
-        link: `/profile/${userId}`,
-        metadata: { followerId: userId },
+        message: `${follower?.display_name || follower?.username || 'Someone'} started following you`,
+        data: { followerId: userId },
       });
-
-    // Update follower/following counts if we have a cache table
-    // (This would be handled by triggers in a real implementation)
 
     return NextResponse.json({ success: true, follow });
   } catch (error) {
@@ -158,7 +163,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     const { error } = await supabase
-      .from('user_follows')
+      .from('follows')
       .delete()
       .eq('follower_id', userId)
       .eq('following_id', followingId);
@@ -184,8 +189,8 @@ export async function HEAD(request: NextRequest) {
     }
 
     const { data: existing } = await supabase
-      .from('user_follows')
-      .select('id')
+      .from('follows')
+      .select('follower_id')
       .eq('follower_id', userId)
       .eq('following_id', targetId)
       .single();
@@ -195,7 +200,7 @@ export async function HEAD(request: NextRequest) {
     } else {
       return new NextResponse(null, { status: 404 }); // Not following
     }
-  } catch (error) {
+  } catch {
     return new NextResponse(null, { status: 500 });
   }
 }
