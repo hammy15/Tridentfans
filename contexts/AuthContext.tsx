@@ -89,6 +89,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, username: string) => {
+    // Check if username is already taken
+    const { data: existingUser } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('username', username)
+      .single();
+
+    if (existingUser) {
+      return { error: 'Username is already taken' };
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -101,20 +112,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: error.message };
     }
 
-    // Create profile
-    if (data.user) {
-      const { error: profileError } = await supabase.from('profiles').insert({
-        id: data.user.id,
-        username,
-        display_name: username,
-        role: 'user',
-      });
-
-      if (profileError) {
-        return { error: 'Failed to create profile' };
-      }
-    }
-
+    // Profile is automatically created by database trigger
+    // Just return success
     return { error: null };
   };
 
