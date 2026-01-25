@@ -52,6 +52,54 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ history: history || [] });
     }
 
+    if (type === 'community') {
+      const gameId = searchParams.get('gameId');
+      if (!gameId) {
+        return NextResponse.json({ error: 'Game ID required' }, { status: 400 });
+      }
+
+      // Get all predictions for this game
+      const { data: allPredictions, error } = await supabase
+        .from('user_predictions')
+        .select('predictions')
+        .eq('game_id', gameId);
+
+      if (error) throw error;
+
+      // Aggregate picks by category
+      const picks: Record<string, Record<string, number>> = {};
+      const totalVotes: Record<string, number> = {};
+
+      (allPredictions || []).forEach((pred) => {
+        const p = pred.predictions as Record<string, string>;
+        if (!p) return;
+
+        Object.entries(p).forEach(([category, value]) => {
+          if (!picks[category]) {
+            picks[category] = {};
+            totalVotes[category] = 0;
+          }
+          picks[category][value] = (picks[category][value] || 0) + 1;
+          totalVotes[category]++;
+        });
+      });
+
+      // Convert to percentages
+      const percentages: Record<string, Record<string, number>> = {};
+      Object.entries(picks).forEach(([category, values]) => {
+        percentages[category] = {};
+        const total = totalVotes[category];
+        Object.entries(values).forEach(([value, count]) => {
+          percentages[category][value] = total > 0 ? Math.round((count / total) * 100) : 0;
+        });
+      });
+
+      return NextResponse.json({
+        picks: percentages,
+        totalParticipants: allPredictions?.length || 0
+      });
+    }
+
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   } catch (error) {
     console.error('Predictions GET error:', error);
@@ -80,11 +128,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Game not found' }, { status: 404 });
     }
 
-    // Check if predictions are still open (30 min before game)
+    // Check if predictions are still open (locks at first pitch)
     const gameDateTime = new Date(`${game.game_date}T${game.game_time}`);
-    const closeTime = new Date(gameDateTime.getTime() - 30 * 60 * 1000);
-    if (new Date() > closeTime) {
-      return NextResponse.json({ error: 'Predictions are closed for this game' }, { status: 400 });
+    if (new Date() >= gameDateTime) {
+      return NextResponse.json({ error: 'Predictions are locked - game has started' }, { status: 400 });
     }
 
     // Check if user already has a prediction for this game

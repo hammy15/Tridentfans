@@ -3,7 +3,6 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { PWAProvider } from '@/components/pwa/PWAProvider';
-import { WelcomeModal } from '@/components/onboarding/WelcomeModal';
 import { QuickTour } from '@/components/onboarding/QuickTour';
 import './globals.css';
 
