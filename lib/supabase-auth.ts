@@ -1,8 +1,33 @@
 import { createBrowserClient } from '@supabase/ssr';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { type User, type Session } from '@supabase/supabase-js';
 
+// Check if running in Capacitor (iOS/Android app)
+function isCapacitor(): boolean {
+  if (typeof window === 'undefined') return false;
+  return !!(window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.();
+}
+
 // Browser client for client components
+// Uses localStorage for Capacitor apps (iOS/Android) for better auth persistence
 export function createClient() {
+  // For native apps, use standard client with localStorage
+  if (isCapacitor()) {
+    return createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        auth: {
+          storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+          autoRefreshToken: true,
+          persistSession: true,
+          detectSessionInUrl: true,
+        },
+      }
+    );
+  }
+
+  // For web, use SSR client with cookies
   return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!

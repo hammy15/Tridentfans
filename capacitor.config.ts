@@ -8,6 +8,8 @@ const config: CapacitorConfig = {
     // Load from production URL (hybrid app approach)
     url: 'https://tridentfans.com',
     cleartext: false,
+    // Allow all cookies for auth to work
+    allowNavigation: ['*.supabase.co', 'tridentfans.com', '*.tridentfans.com'],
   },
   ios: {
     contentInset: 'automatic',
@@ -15,6 +17,8 @@ const config: CapacitorConfig = {
     scrollEnabled: true,
     backgroundColor: '#0C2C56', // Mariners Navy
     preferredContentMode: 'mobile',
+    // Enable cookies for authentication
+    limitsNavigationsToAppBoundDomains: false,
   },
   plugins: {
     SplashScreen: {
