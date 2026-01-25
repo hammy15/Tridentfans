@@ -47,36 +47,36 @@ export function BotPredictions({ gameId }: BotPredictionsProps) {
   const [gameFinished, setGameFinished] = useState(false);
 
   useEffect(() => {
+    async function fetchBotPredictions() {
+      const supabase = createClient();
+
+      try {
+        // Fetch bot predictions for this game
+        const { data: botPreds, error } = await supabase
+          .from('bot_predictions')
+          .select('*')
+          .eq('game_id', gameId)
+          .order('created_at', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching bot predictions:', error);
+          return;
+        }
+
+        setPredictions(botPreds || []);
+
+        // Check if game is finished (any bot has a score)
+        const hasScores = botPreds?.some(p => p.score !== null);
+        setGameFinished(hasScores);
+      } catch (error) {
+        console.error('Failed to fetch bot predictions:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
     fetchBotPredictions();
   }, [gameId]);
-
-  async function fetchBotPredictions() {
-    const supabase = createClient();
-
-    try {
-      // Fetch bot predictions for this game
-      const { data: botPreds, error } = await supabase
-        .from('bot_predictions')
-        .select('*')
-        .eq('game_id', gameId)
-        .order('created_at', { ascending: true });
-
-      if (error) {
-        console.error('Error fetching bot predictions:', error);
-        return;
-      }
-
-      setPredictions(botPreds || []);
-
-      // Check if game is finished (any bot has a score)
-      const hasScores = botPreds?.some(p => p.score !== null);
-      setGameFinished(hasScores);
-    } catch (error) {
-      console.error('Failed to fetch bot predictions:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   if (loading) {
     return (

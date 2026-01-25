@@ -55,65 +55,58 @@ export function SeasonPassProgress({ userId }: SeasonPassProgressProps) {
 
   useEffect(() => {
     async function init() {
-      if (!userId) {
+      let effectiveUserId = userId;
+
+      if (!effectiveUserId) {
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
+          effectiveUserId = user.id;
           setCurrentUserId(user.id);
         } else {
           setLoading(false);
           return;
         }
       }
-      fetchProgress();
+
+      // Fetch progress inline
+      const supabase = createClient();
+
+      try {
+        // Fetch user's season progress
+        const { data: progressData, error: progressError } = await supabase
+          .from('user_season_progress')
+          .select('*')
+          .eq('user_id', effectiveUserId)
+          .order('season', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (progressError && progressError.code !== 'PGRST116') {
+          console.error('Error fetching progress:', progressError);
+        }
+
+        if (progressData) {
+          setProgress(progressData);
+
+          // Fetch next tier rewards
+          const nextTier = Math.min(progressData.current_tier + 1, 10);
+          const { data: rewardsData } = await supabase
+            .from('season_rewards')
+            .select('*')
+            .eq('tier', nextTier)
+            .order('points_required', { ascending: true });
+
+          setNextRewards(rewardsData || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch progress:', error);
+      } finally {
+        setLoading(false);
+      }
     }
     init();
   }, [userId]);
-
-  useEffect(() => {
-    if (currentUserId) {
-      fetchProgress();
-    }
-  }, [currentUserId]);
-
-  async function fetchProgress() {
-    if (!currentUserId) return;
-
-    const supabase = createClient();
-
-    try {
-      // Fetch user's season progress
-      const { data: progressData, error: progressError } = await supabase
-        .from('user_season_progress')
-        .select('*')
-        .eq('user_id', currentUserId)
-        .order('season', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (progressError && progressError.code !== 'PGRST116') {
-        console.error('Error fetching progress:', progressError);
-      }
-
-      if (progressData) {
-        setProgress(progressData);
-
-        // Fetch next tier rewards
-        const nextTier = Math.min(progressData.current_tier + 1, 10);
-        const { data: rewardsData } = await supabase
-          .from('season_rewards')
-          .select('*')
-          .eq('tier', nextTier)
-          .order('points_required', { ascending: true });
-
-        setNextRewards(rewardsData || []);
-      }
-    } catch (error) {
-      console.error('Failed to fetch progress:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   if (loading) {
     return (

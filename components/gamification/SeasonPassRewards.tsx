@@ -56,19 +56,18 @@ export function SeasonPassRewards() {
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
+    async function init() {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user) {
+        setUserId(user.id);
+      }
+
+      await fetchData(user?.id);
+    }
     init();
   }, []);
-
-  async function init() {
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (user) {
-      setUserId(user.id);
-    }
-
-    await fetchData(user?.id);
-  }
 
   async function fetchData(currentUserId?: string) {
     const supabase = createClient();
