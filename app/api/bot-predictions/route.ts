@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}
 
 // Bot prediction styles
 const BOT_PREDICTION_STYLES = {
@@ -37,7 +39,7 @@ export async function GET(request: NextRequest) {
       const season = parseInt(searchParams.get('season') || String(new Date().getFullYear()));
 
       // Get bot total scores
-      const { data: botScores } = await supabase
+      const { data: botScores } = await getSupabase()
         .from('bot_predictions')
         .select('bot_id, score')
         .not('score', 'is', null);
@@ -56,7 +58,7 @@ export async function GET(request: NextRequest) {
       });
 
       // Get human leaderboard
-      const { data: humanLeaderboard } = await supabase
+      const { data: humanLeaderboard } = await getSupabase()
         .from('prediction_leaderboard')
         .select('user_id, total_points, predictions_made, profiles(username, display_name)')
         .eq('season', season)
@@ -79,7 +81,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'gameId required' }, { status: 400 });
     }
 
-    const { data: predictions, error } = await supabase
+    const { data: predictions, error } = await getSupabase()
       .from('bot_predictions')
       .select('*')
       .eq('game_id', gameId);
@@ -105,7 +107,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get game details
-    const { data: game } = await supabase
+    const { data: game } = await getSupabase()
       .from('prediction_games')
       .select('*')
       .eq('id', gameId)
@@ -120,7 +122,7 @@ export async function POST(request: NextRequest) {
 
     for (const botId of ['moose', 'captain_hammy', 'spartan'] as const) {
       // Check if prediction already exists
-      const { data: existing } = await supabase
+      const { data: existing } = await getSupabase()
         .from('bot_predictions')
         .select('id')
         .eq('bot_id', botId)
@@ -158,7 +160,7 @@ export async function POST(request: NextRequest) {
 
       const reasoning = generateReasoning(botId, predictions, game.opponent);
 
-      const { data: prediction, error } = await supabase
+      const { data: prediction, error } = await getSupabase()
         .from('bot_predictions')
         .insert({
           bot_id: botId,

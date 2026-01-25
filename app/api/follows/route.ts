@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 // GET - Get followers/following list
 export async function GET(request: NextRequest) {
@@ -26,7 +28,7 @@ export async function GET(request: NextRequest) {
     let query;
     if (type === 'followers') {
       // Get users who follow this user
-      query = supabase
+      query = getSupabase()
         .from('follows')
         .select(`
           follower_id,
@@ -38,7 +40,7 @@ export async function GET(request: NextRequest) {
         .range(offset, offset + limit - 1);
     } else {
       // Get users this user follows
-      query = supabase
+      query = getSupabase()
         .from('follows')
         .select(`
           following_id,
@@ -55,12 +57,12 @@ export async function GET(request: NextRequest) {
     if (error) throw error;
 
     // Get counts
-    const { count: followersCount } = await supabase
+    const { count: followersCount } = await getSupabase()
       .from('follows')
       .select('*', { count: 'exact', head: true })
       .eq('following_id', userId);
 
-    const { count: followingCount } = await supabase
+    const { count: followingCount } = await getSupabase()
       .from('follows')
       .select('*', { count: 'exact', head: true })
       .eq('follower_id', userId);
@@ -104,7 +106,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if already following
-    const { data: existing } = await supabase
+    const { data: existing } = await getSupabase()
       .from('follows')
       .select('follower_id')
       .eq('follower_id', userId)
@@ -116,7 +118,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create follow
-    const { data: follow, error } = await supabase
+    const { data: follow, error } = await getSupabase()
       .from('follows')
       .insert({
         follower_id: userId,
@@ -128,14 +130,14 @@ export async function POST(request: NextRequest) {
     if (error) throw error;
 
     // Get follower info for notification
-    const { data: follower } = await supabase
+    const { data: follower } = await getSupabase()
       .from('profiles')
       .select('username, display_name')
       .eq('id', userId)
       .single();
 
     // Create notification for the followed user
-    await supabase
+    await getSupabase()
       .from('notifications')
       .insert({
         user_id: followingId,
@@ -162,7 +164,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'userId and followingId required' }, { status: 400 });
     }
 
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('follows')
       .delete()
       .eq('follower_id', userId)
@@ -188,7 +190,7 @@ export async function HEAD(request: NextRequest) {
       return new NextResponse(null, { status: 400 });
     }
 
-    const { data: existing } = await supabase
+    const { data: existing } = await getSupabase()
       .from('follows')
       .select('follower_id')
       .eq('follower_id', userId)

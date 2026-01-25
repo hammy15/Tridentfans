@@ -85,10 +85,16 @@ export function LiveGameChat({ gameId }: LiveGameChatProps) {
 
       if (!error && data) {
         // Transform and reverse to show oldest first, newest at bottom
-        const transformed = data.map((msg) => ({
-          ...msg,
-          profiles: Array.isArray(msg.profiles) ? msg.profiles[0] : msg.profiles,
-        })) as ChatMessage[];
+        const transformed: ChatMessage[] = data.map((msg) => ({
+          id: msg.id,
+          game_id: msg.game_id,
+          user_id: msg.user_id,
+          message: msg.message,
+          created_at: msg.created_at,
+          profiles: Array.isArray(msg.profiles) && msg.profiles.length > 0
+            ? { username: msg.profiles[0].username }
+            : null,
+        }));
         setMessages(transformed.reverse());
       }
     }
@@ -142,10 +148,16 @@ export function LiveGameChat({ gameId }: LiveGameChatProps) {
               .single();
 
             if (data) {
-              const transformedMsg = {
-                ...data,
-                profiles: Array.isArray(data.profiles) ? data.profiles[0] : data.profiles,
-              } as ChatMessage;
+              const transformedMsg: ChatMessage = {
+                id: data.id,
+                game_id: data.game_id,
+                user_id: data.user_id,
+                message: data.message,
+                created_at: data.created_at,
+                profiles: Array.isArray(data.profiles) && data.profiles.length > 0
+                  ? { username: data.profiles[0].username }
+                  : null,
+              };
 
               setMessages((prev) => {
                 // Keep only last 100 messages

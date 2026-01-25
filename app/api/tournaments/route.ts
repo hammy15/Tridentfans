@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 // GET - List tournaments
 export async function GET(request: NextRequest) {
@@ -18,9 +20,10 @@ export async function GET(request: NextRequest) {
 
     // Get specific tournament with details
     if (tournamentId) {
-      const { data: tournament, error } = await supabase
+      const { data: tournament, error } = await getSupabase()
         .from('tournaments')
-        .select(`
+        .select(
+          `
           *,
           participants:tournament_participants(
             user_id,
@@ -30,14 +33,15 @@ export async function GET(request: NextRequest) {
             rank,
             user:profiles(id, username, display_name, avatar_url)
           )
-        `)
+        `
+        )
         .eq('id', tournamentId)
         .single();
 
       if (error) throw error;
 
       // Get participant count
-      const { count: participantCount } = await supabase
+      const { count: participantCount } = await getSupabase()
         .from('tournament_participants')
         .select('*', { count: 'exact', head: true })
         .eq('tournament_id', tournamentId);
@@ -51,7 +55,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build query for tournament list
-    let query = supabase
+    let query = getSupabase()
       .from('tournaments')
       .select('*')
       .order('start_date', { ascending: true })
@@ -70,7 +74,7 @@ export async function GET(request: NextRequest) {
     let userParticipation: Record<string, boolean> = {};
     if (userId && tournaments && tournaments.length > 0) {
       const tournamentIds = tournaments.map(t => t.id);
-      const { data: participations } = await supabase
+      const { data: participations } = await getSupabase()
         .from('tournament_participants')
         .select('tournament_id')
         .eq('user_id', userId)
@@ -83,8 +87,8 @@ export async function GET(request: NextRequest) {
 
     // Get participant counts for each tournament
     const tournamentsWithCounts = await Promise.all(
-      (tournaments || []).map(async (tournament) => {
-        const { count } = await supabase
+      (tournaments || []).map(async tournament => {
+        const { count } = await getSupabase()
           .from('tournament_participants')
           .select('*', { count: 'exact', head: true })
           .eq('tournament_id', tournament.id);
@@ -115,7 +119,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if tournament exists and is open for registration
-    const { data: tournament, error: tournamentError } = await supabase
+    const { data: tournament, error: tournamentError } = await getSupabase()
       .from('tournaments')
       .select('*')
       .eq('id', tournamentId)
@@ -131,7 +135,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if already joined
-    const { data: existing } = await supabase
+    const { data: existing } = await getSupabase()
       .from('tournament_participants')
       .select('user_id')
       .eq('user_id', userId)
@@ -143,7 +147,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Join tournament
-    const { data: participation, error } = await supabase
+    const { data: participation, error } = await getSupabase()
       .from('tournament_participants')
       .insert({
         user_id: userId,
@@ -157,7 +161,7 @@ export async function POST(request: NextRequest) {
     if (error) throw error;
 
     // Create notification
-    await supabase
+    await getSupabase()
       .from('notifications')
       .insert({
         user_id: userId,
@@ -185,17 +189,20 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Check if tournament has started
-    const { data: tournament } = await supabase
+    const { data: tournament } = await getSupabase()
       .from('tournaments')
       .select('status')
       .eq('id', tournamentId)
       .single();
 
     if (tournament && tournament.status !== 'upcoming') {
-      return NextResponse.json({ error: 'Cannot leave a tournament that has started' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Cannot leave a tournament that has started' },
+        { status: 400 }
+      );
     }
 
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('tournament_participants')
       .delete()
       .eq('user_id', userId)
@@ -226,7 +233,7 @@ export async function PATCH(request: NextRequest) {
         return NextResponse.json({ error: 'No update data provided' }, { status: 400 });
       }
 
-      const { error } = await supabase
+      const { error } = await getSupabase()
         .from('tournament_participants')
         .update(updateData)
         .eq('user_id', userId)
@@ -242,7 +249,7 @@ export async function PATCH(request: NextRequest) {
 
     // Admin update for tournament details
     if (adminPassword === process.env.NEXT_PUBLIC_ADMIN_PASSWORD && tournamentId && updates) {
-      const { error } = await supabase
+      const { error } = await getSupabase()
         .from('tournaments')
         .update(updates)
         .eq('id', tournamentId);
@@ -261,7 +268,7 @@ export async function PATCH(request: NextRequest) {
 
 // Helper function to recalculate tournament ranks
 async function recalculateTournamentRanks(tournamentId: string) {
-  const { data: participants } = await supabase
+  const { data: participants } = await getSupabase()
     .from('tournament_participants')
     .select('user_id, total_points')
     .eq('tournament_id', tournamentId)
@@ -271,7 +278,7 @@ async function recalculateTournamentRanks(tournamentId: string) {
 
   // Update ranks
   for (let i = 0; i < participants.length; i++) {
-    await supabase
+    await getSupabase()
       .from('tournament_participants')
       .update({ rank: i + 1 })
       .eq('tournament_id', tournamentId)

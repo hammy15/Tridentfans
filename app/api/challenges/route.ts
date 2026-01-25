@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 // GET - Get user's challenges
 export async function GET(request: NextRequest) {
@@ -19,7 +21,7 @@ export async function GET(request: NextRequest) {
 
     // Get specific challenge
     if (challengeId) {
-      const { data: challenge, error } = await supabase
+      const { data: challenge, error } = await getSupabase()
         .from('challenges')
         .select(`
           *,
@@ -40,7 +42,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build query based on type
-    let query = supabase
+    let query = getSupabase()
       .from('challenges')
       .select(`
         *,
@@ -71,7 +73,7 @@ export async function GET(request: NextRequest) {
     if (error) throw error;
 
     // Get counts by status
-    const { data: statusCounts } = await supabase
+    const { data: statusCounts } = await getSupabase()
       .from('challenges')
       .select('status')
       .or(`challenger_id.eq.${userId},opponent_id.eq.${userId}`);
@@ -114,7 +116,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if game exists and predictions are still open
-    const { data: game, error: gameError } = await supabase
+    const { data: game, error: gameError } = await getSupabase()
       .from('prediction_games')
       .select('*')
       .eq('id', gameId)
@@ -134,7 +136,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check for existing challenge between these users for this game
-    const { data: existingChallenge } = await supabase
+    const { data: existingChallenge } = await getSupabase()
       .from('challenges')
       .select('id')
       .eq('game_id', gameId)
@@ -147,7 +149,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create challenge
-    const { data: challenge, error } = await supabase
+    const { data: challenge, error } = await getSupabase()
       .from('challenges')
       .insert({
         challenger_id: userId,
@@ -166,14 +168,14 @@ export async function POST(request: NextRequest) {
     if (error) throw error;
 
     // Get challenger info for notification
-    const { data: challenger } = await supabase
+    const { data: challenger } = await getSupabase()
       .from('profiles')
       .select('username, display_name')
       .eq('id', userId)
       .single();
 
     // Create notification for opponent
-    await supabase
+    await getSupabase()
       .from('notifications')
       .insert({
         user_id: opponentId,
@@ -204,7 +206,7 @@ export async function PATCH(request: NextRequest) {
     if (systemKey === process.env.CRON_SECRET && challengeId && scores) {
       const { challengerScore, opponentScore, winnerId } = scores;
 
-      const { error } = await supabase
+      const { error } = await getSupabase()
         .from('challenges')
         .update({
           status: 'completed',
@@ -218,7 +220,7 @@ export async function PATCH(request: NextRequest) {
       if (error) throw error;
 
       // Get challenge details for notifications
-      const { data: challenge } = await supabase
+      const { data: challenge } = await getSupabase()
         .from('challenges')
         .select('challenger_id, opponent_id')
         .eq('id', challengeId)
@@ -229,7 +231,7 @@ export async function PATCH(request: NextRequest) {
         const notifyUsers = [challenge.challenger_id, challenge.opponent_id];
         for (const notifyUserId of notifyUsers) {
           const isWinner = winnerId === notifyUserId;
-          await supabase
+          await getSupabase()
             .from('notifications')
             .insert({
               user_id: notifyUserId,
@@ -256,7 +258,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Verify user is the opponent
-    const { data: challenge, error: challengeError } = await supabase
+    const { data: challenge, error: challengeError } = await getSupabase()
       .from('challenges')
       .select('*')
       .eq('id', challengeId)
@@ -276,7 +278,7 @@ export async function PATCH(request: NextRequest) {
 
     const newStatus = action === 'accept' ? 'accepted' : 'declined';
 
-    const { error: updateError } = await supabase
+    const { error: updateError } = await getSupabase()
       .from('challenges')
       .update({
         status: newStatus,
@@ -287,14 +289,14 @@ export async function PATCH(request: NextRequest) {
     if (updateError) throw updateError;
 
     // Get opponent info for notification
-    const { data: opponent } = await supabase
+    const { data: opponent } = await getSupabase()
       .from('profiles')
       .select('username, display_name')
       .eq('id', userId)
       .single();
 
     // Notify challenger
-    await supabase
+    await getSupabase()
       .from('notifications')
       .insert({
         user_id: challenge.challenger_id,
@@ -322,7 +324,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Verify user is the challenger and challenge is still pending
-    const { data: challenge } = await supabase
+    const { data: challenge } = await getSupabase()
       .from('challenges')
       .select('challenger_id, status')
       .eq('id', challengeId)
@@ -340,7 +342,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Can only cancel pending challenges' }, { status: 400 });
     }
 
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('challenges')
       .delete()
       .eq('id', challengeId);

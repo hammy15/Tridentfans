@@ -105,7 +105,7 @@ export function AnimatedSplash() {
             <div className="absolute inset-0 blur-3xl bg-mariners-teal/30 rounded-full scale-150" />
 
             {/* Trident */}
-            <div className="relative text-8xl md:text-9xl animate-bounce-slow">
+            <div className="relative text-8xl md:text-9xl animate-[bounce-slow_3s_ease-in-out_infinite]">
               🔱
             </div>
 
@@ -193,21 +193,6 @@ export function AnimatedSplash() {
 
       {/* Bottom gradient fade */}
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-mariners-navy to-transparent pointer-events-none" />
-
-      {/* Custom animation styles */}
-      <style jsx>{`
-        @keyframes bounce-slow {
-          0%, 100% {
-            transform: translateY(0);
-          }
-          50% {
-            transform: translateY(-10px);
-          }
-        }
-        .animate-bounce-slow {
-          animation: bounce-slow 3s ease-in-out infinite;
-        }
-      `}</style>
     </div>
   );
 }

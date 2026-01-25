@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 // GET - Fetch user's notifications
 export async function GET(request: NextRequest) {
@@ -19,7 +21,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'userId required' }, { status: 400 });
     }
 
-    let query = supabase
+    let query = getSupabase()
       .from('notifications')
       .select('*')
       .eq('user_id', userId)
@@ -35,7 +37,7 @@ export async function GET(request: NextRequest) {
     if (error) throw error;
 
     // Also get unread count
-    const { count: unreadCount } = await supabase
+    const { count: unreadCount } = await getSupabase()
       .from('notifications')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId)
@@ -58,12 +60,18 @@ export async function POST(request: NextRequest) {
     const { userId, type, title, message, data, systemKey } = body;
 
     // Verify system key for internal API calls
-    if (systemKey !== process.env.CRON_SECRET && systemKey !== process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    if (
+      systemKey !== process.env.CRON_SECRET &&
+      systemKey !== process.env.SUPABASE_SERVICE_ROLE_KEY
+    ) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     if (!userId || !type || !title || !message) {
-      return NextResponse.json({ error: 'Missing required fields: userId, type, title, message' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Missing required fields: userId, type, title, message' },
+        { status: 400 }
+      );
     }
 
     // Valid notification types
@@ -81,10 +89,13 @@ export async function POST(request: NextRequest) {
     ];
 
     if (!validTypes.includes(type)) {
-      return NextResponse.json({ error: `Invalid type. Must be one of: ${validTypes.join(', ')}` }, { status: 400 });
+      return NextResponse.json(
+        { error: `Invalid type. Must be one of: ${validTypes.join(', ')}` },
+        { status: 400 }
+      );
     }
 
-    const { data: notification, error } = await supabase
+    const { data: notification, error } = await getSupabase()
       .from('notifications')
       .insert({
         user_id: userId,
@@ -118,7 +129,7 @@ export async function PATCH(request: NextRequest) {
 
     if (markAllRead) {
       // Mark all notifications as read for user
-      const { error } = await supabase
+      const { error } = await getSupabase()
         .from('notifications')
         .update({ read: true })
         .eq('user_id', userId)
@@ -130,11 +141,14 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (!notificationIds || !Array.isArray(notificationIds) || notificationIds.length === 0) {
-      return NextResponse.json({ error: 'notificationIds array required (or markAllRead: true)' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'notificationIds array required (or markAllRead: true)' },
+        { status: 400 }
+      );
     }
 
     // Mark specific notifications as read
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('notifications')
       .update({ read: true })
       .eq('user_id', userId)
@@ -160,10 +174,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     if (deleteAll) {
-      const { error } = await supabase
-        .from('notifications')
-        .delete()
-        .eq('user_id', userId);
+      const { error } = await getSupabase().from('notifications').delete().eq('user_id', userId);
 
       if (error) throw error;
 
@@ -171,10 +182,13 @@ export async function DELETE(request: NextRequest) {
     }
 
     if (!notificationIds || !Array.isArray(notificationIds) || notificationIds.length === 0) {
-      return NextResponse.json({ error: 'notificationIds array required (or deleteAll: true)' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'notificationIds array required (or deleteAll: true)' },
+        { status: 400 }
+      );
     }
 
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('notifications')
       .delete()
       .eq('user_id', userId)

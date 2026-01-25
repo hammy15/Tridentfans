@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -177,7 +177,7 @@ function SeasonPassProgress({ totalPoints }: { totalPoints: number }) {
   );
 }
 
-export default function ProfilePage() {
+function ProfileContent() {
   const { user, profile: authProfile, loading, refreshProfile } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -966,5 +966,21 @@ export default function ProfilePage() {
         )}
       </div>
     </div>
+  );
+}
+
+function ProfileLoading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <Loader2 className="h-8 w-8 animate-spin text-mariners-teal" />
+    </div>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={<ProfileLoading />}>
+      <ProfileContent />
+    </Suspense>
   );
 }
