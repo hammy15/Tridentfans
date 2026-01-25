@@ -9,7 +9,6 @@ import {
   Sparkles,
   Loader2,
   RefreshCw,
-  Trophy,
   Star,
   Clock,
   TrendingUp,
@@ -153,6 +152,7 @@ export function PostGameRecap({ gameId, result }: PostGameRecapProps) {
 
   useEffect(() => {
     fetchRecap();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameId]);
 
   async function fetchRecap() {

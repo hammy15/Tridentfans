@@ -49,7 +49,7 @@ interface GameAnalysis {
 }
 
 // Mock data generator for demonstration
-function generateMockAnalysis(opponent: string, gameDate: string): GameAnalysis {
+function generateMockAnalysis(opponent: string, _gameDate: string): GameAnalysis {
   const marinersStarters = [
     { name: 'Logan Gilbert', record: '10-6', era: '3.18', lastStart: '7 IP, 2 ER, 8 K' },
     { name: 'George Kirby', record: '11-8', era: '3.45', lastStart: '6.1 IP, 3 ER, 7 K' },
@@ -130,6 +130,7 @@ export function GamePreviewAI({ gameId, opponent, gameDate }: GamePreviewAIProps
 
   useEffect(() => {
     fetchAnalysis();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameId, opponent, gameDate]);
 
   async function fetchAnalysis() {
