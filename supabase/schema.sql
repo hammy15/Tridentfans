@@ -364,3 +364,190 @@ CREATE TRIGGER trigger_bot_config_updated
 BEFORE UPDATE ON bot_configurations
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at();
+
+-- ============================================
+-- POLLS
+-- ============================================
+
+CREATE TABLE polls (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  question TEXT NOT NULL,
+  category TEXT NOT NULL CHECK (category IN ('game', 'trade', 'roster', 'general', 'fun')),
+  created_by TEXT NOT NULL DEFAULT 'admin',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  ends_at TIMESTAMPTZ NOT NULL,
+  is_active BOOLEAN DEFAULT true,
+  is_featured BOOLEAN DEFAULT false,
+  allow_comments BOOLEAN DEFAULT true
+);
+
+CREATE TABLE poll_options (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  poll_id UUID REFERENCES polls(id) ON DELETE CASCADE,
+  text TEXT NOT NULL,
+  vote_count INTEGER DEFAULT 0
+);
+
+CREATE TABLE poll_votes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  poll_id UUID REFERENCES polls(id) ON DELETE CASCADE,
+  option_id UUID REFERENCES poll_options(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(poll_id, user_id)
+);
+
+-- Indexes for polls
+CREATE INDEX idx_polls_active ON polls(is_active, ends_at DESC);
+CREATE INDEX idx_polls_featured ON polls(is_featured) WHERE is_featured = true;
+CREATE INDEX idx_polls_category ON polls(category);
+CREATE INDEX idx_poll_options_poll ON poll_options(poll_id);
+CREATE INDEX idx_poll_votes_poll ON poll_votes(poll_id);
+CREATE INDEX idx_poll_votes_user ON poll_votes(user_id);
+
+-- RLS for polls
+ALTER TABLE polls ENABLE ROW LEVEL SECURITY;
+ALTER TABLE poll_options ENABLE ROW LEVEL SECURITY;
+ALTER TABLE poll_votes ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Polls are viewable by everyone" ON polls
+  FOR SELECT USING (true);
+
+CREATE POLICY "Poll options are viewable by everyone" ON poll_options
+  FOR SELECT USING (true);
+
+CREATE POLICY "Poll votes are viewable by everyone" ON poll_votes
+  FOR SELECT USING (true);
+
+CREATE POLICY "Authenticated users can vote" ON poll_votes
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Function to increment poll option votes (atomic)
+CREATE OR REPLACE FUNCTION increment_poll_option_votes(option_id UUID)
+RETURNS void AS $$
+BEGIN
+  UPDATE poll_options
+  SET vote_count = vote_count + 1
+  WHERE id = option_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Enable realtime for poll updates
+ALTER PUBLICATION supabase_realtime ADD TABLE polls;
+ALTER PUBLICATION supabase_realtime ADD TABLE poll_options;
+ALTER PUBLICATION supabase_realtime ADD TABLE poll_votes;
+
+-- ============================================
+-- PLAYER COMPARISON SYSTEM
+-- ============================================
+
+-- Featured comparisons (admin-curated quick picks)
+CREATE TABLE featured_comparisons (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  player1_id INTEGER NOT NULL,
+  player1_name TEXT NOT NULL,
+  player2_id INTEGER NOT NULL,
+  player2_name TEXT NOT NULL,
+  label TEXT NOT NULL,
+  is_active BOOLEAN DEFAULT true,
+  sort_order INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Comparison analytics (track popular comparisons)
+CREATE TABLE comparison_analytics (
+  player1_id INTEGER NOT NULL,
+  player2_id INTEGER NOT NULL,
+  count INTEGER DEFAULT 1,
+  last_compared_at TIMESTAMPTZ DEFAULT NOW(),
+  PRIMARY KEY (player1_id, player2_id),
+  CONSTRAINT ordered_players CHECK (player1_id < player2_id)
+);
+
+-- Player stats cache (to reduce MLB API calls)
+CREATE TABLE player_stats_cache (
+  player_id INTEGER PRIMARY KEY,
+  data JSONB NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Player search cache
+CREATE TABLE player_search_cache (
+  query TEXT PRIMARY KEY,
+  results JSONB NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Indexes for player comparison
+CREATE INDEX idx_featured_comparisons_active ON featured_comparisons(is_active, sort_order);
+CREATE INDEX idx_comparison_analytics_count ON comparison_analytics(count DESC);
+CREATE INDEX idx_player_stats_cache_expires ON player_stats_cache(expires_at);
+CREATE INDEX idx_player_search_cache_expires ON player_search_cache(expires_at);
+
+-- RLS for player comparison tables
+ALTER TABLE featured_comparisons ENABLE ROW LEVEL SECURITY;
+ALTER TABLE comparison_analytics ENABLE ROW LEVEL SECURITY;
+ALTER TABLE player_stats_cache ENABLE ROW LEVEL SECURITY;
+ALTER TABLE player_search_cache ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Featured comparisons are viewable by everyone" ON featured_comparisons
+  FOR SELECT USING (true);
+
+CREATE POLICY "Only admins can modify featured comparisons" ON featured_comparisons
+  FOR ALL USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+  );
+
+CREATE POLICY "Comparison analytics are viewable by everyone" ON comparison_analytics
+  FOR SELECT USING (true);
+
+CREATE POLICY "Anyone can insert/update comparison analytics" ON comparison_analytics
+  FOR ALL USING (true);
+
+CREATE POLICY "Player stats cache is viewable by everyone" ON player_stats_cache
+  FOR SELECT USING (true);
+
+CREATE POLICY "Anyone can insert/update player stats cache" ON player_stats_cache
+  FOR ALL USING (true);
+
+CREATE POLICY "Player search cache is viewable by everyone" ON player_search_cache
+  FOR SELECT USING (true);
+
+CREATE POLICY "Anyone can insert/update player search cache" ON player_search_cache
+  FOR ALL USING (true);
+
+-- Function to increment comparison count (upsert)
+CREATE OR REPLACE FUNCTION increment_comparison_count(p_player1_id INTEGER, p_player2_id INTEGER)
+RETURNS void AS $$
+DECLARE
+  v_id1 INTEGER;
+  v_id2 INTEGER;
+BEGIN
+  -- Ensure consistent ordering (smaller ID first)
+  IF p_player1_id < p_player2_id THEN
+    v_id1 := p_player1_id;
+    v_id2 := p_player2_id;
+  ELSE
+    v_id1 := p_player2_id;
+    v_id2 := p_player1_id;
+  END IF;
+
+  INSERT INTO comparison_analytics (player1_id, player2_id, count, last_compared_at)
+  VALUES (v_id1, v_id2, 1, NOW())
+  ON CONFLICT (player1_id, player2_id)
+  DO UPDATE SET
+    count = comparison_analytics.count + 1,
+    last_compared_at = NOW();
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to clean up expired cache entries
+CREATE OR REPLACE FUNCTION cleanup_player_cache()
+RETURNS void AS $$
+BEGIN
+  DELETE FROM player_stats_cache WHERE expires_at < NOW();
+  DELETE FROM player_search_cache WHERE expires_at < NOW();
+END;
+$$ LANGUAGE plpgsql;

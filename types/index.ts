@@ -309,8 +309,219 @@ export interface UserFollow {
   following?: Profile;
 }
 
+// Push Notification Types
+export interface PushSubscription {
+  id: string;
+  user_id: string;
+  endpoint: string;
+  keys: { p256dh: string; auth: string };
+  created_at: string;
+  is_active: boolean;
+}
+
+export interface PushNotificationPreferences {
+  user_id: string;
+  game_reminders: boolean; // 30 min before game
+  prediction_closing: boolean; // When predictions close
+  challenge_updates: boolean; // Challenge received/accepted
+  follower_activity: boolean; // Followed user predictions
+  achievements: boolean; // Badges unlocked
+  weekly_digest: boolean;
+}
+
+export interface PushNotificationPayload {
+  title: string;
+  body: string;
+  icon?: string;
+  badge?: string;
+  image?: string;
+  tag?: string;
+  data?: Record<string, unknown>;
+  actions?: Array<{
+    action: string;
+    title: string;
+    icon?: string;
+  }>;
+}
+
+// Historical Moments Types
+export type HistoricalCategory = 'game' | 'trade' | 'milestone' | 'draft' | 'record' | 'other';
+
+export interface HistoricalMoment {
+  id: string;
+  date_month: number; // 1-12
+  date_day: number; // 1-31
+  year: number;
+  title: string;
+  description: string;
+  category: HistoricalCategory;
+  player_names?: string[];
+  image_url?: string;
+  source_url?: string;
+  is_featured: boolean;
+  created_at: string;
+}
+
+// Prospect Types (Minor League Tracker)
+export type ProspectLevel = 'AAA' | 'AA' | 'A+' | 'A' | 'Rookie' | 'DSL';
+export type ProspectUpdateType = 'promotion' | 'stats' | 'injury' | 'trade' | 'signing';
+
+export interface ProspectStats {
+  avg?: number;
+  hr?: number;
+  rbi?: number;
+  sb?: number;
+  era?: number;
+  wins?: number;
+  strikeouts?: number;
+  whip?: number;
+}
+
+export interface ScoutingGrades {
+  hit?: number;
+  power?: number;
+  speed?: number;
+  arm?: number;
+  field?: number;
+  overall?: number;
+}
+
+export interface Prospect {
+  id: string;
+  name: string;
+  position: string;
+  level: ProspectLevel;
+  team_name: string;
+  age: number;
+  bats: 'L' | 'R' | 'S';
+  throws: 'L' | 'R';
+  stats: ProspectStats;
+  ranking?: number;
+  scouting_grades?: ScoutingGrades;
+  eta?: string;
+  notes?: string;
+  photo_url?: string;
+  is_featured: boolean;
+  last_updated: string;
+}
+
+export interface ProspectUpdate {
+  id: string;
+  prospect_id: string;
+  update_type: ProspectUpdateType;
+  title: string;
+  description: string;
+  created_at: string;
+}
+
+// Poll Types
+export type PollCategory = 'game' | 'trade' | 'roster' | 'general' | 'fun';
+
+export interface Poll {
+  id: string;
+  question: string;
+  options: PollOption[];
+  category: PollCategory;
+  created_by: string;
+  created_at: string;
+  ends_at: string;
+  is_active: boolean;
+  is_featured: boolean;
+  total_votes: number;
+  allow_comments: boolean;
+}
+
+export interface PollOption {
+  id: string;
+  poll_id: string;
+  text: string;
+  vote_count: number;
+  percentage?: number;
+}
+
+export interface PollVote {
+  id: string;
+  poll_id: string;
+  option_id: string;
+  user_id: string;
+  created_at: string;
+}
+
 // API Response Types
 export interface ApiResponse<T> {
   data: T | null;
   error: string | null;
+}
+
+// Email Preferences Types
+export type DigestDay = 'monday' | 'friday' | 'sunday';
+
+export interface EmailPreferences {
+  user_id: string;
+  weekly_digest: boolean;
+  digest_day: DigestDay;
+  include_predictions: boolean;
+  include_leaderboard: boolean;
+  include_forum: boolean;
+  include_news: boolean;
+  include_upcoming_games: boolean;
+  email_verified: boolean;
+  unsubscribe_token: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface DigestLog {
+  id: string;
+  user_id: string;
+  sent_at: string;
+  opened_at?: string;
+  clicked_at?: string;
+  email_type: 'weekly_digest' | 'game_reminder' | 'prediction_result';
+  metadata?: Record<string, unknown>;
+}
+
+export interface DigestStats {
+  totalSent: number;
+  totalOpened: number;
+  totalClicked: number;
+  openRate: number;
+  clickRate: number;
+}
+
+export interface DigestContent {
+  // Prediction stats
+  predictionsThisWeek: number;
+  correctPredictions: number;
+  accuracyThisWeek: number;
+  pointsEarnedThisWeek: number;
+
+  // Leaderboard
+  currentRank: number;
+  rankChange: number; // positive = moved up, negative = moved down
+  totalPoints: number;
+
+  // Forum
+  hotTopics: Array<{
+    id: string;
+    title: string;
+    commentCount: number;
+    author: string;
+  }>;
+
+  // Upcoming games
+  upcomingGames: Array<{
+    id: string;
+    opponent: string;
+    gameDate: string;
+    gameTime: string;
+    isHome: boolean;
+  }>;
+
+  // On This Day
+  onThisDay?: {
+    year: number;
+    title: string;
+    description: string;
+  };
 }

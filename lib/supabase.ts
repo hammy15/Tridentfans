@@ -11,6 +11,9 @@ import type {
   LeaderboardEntry,
   MarinersPlayer,
   ScheduleGame,
+  Poll,
+  PollOption,
+  PollVote,
 } from '@/types';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -76,6 +79,21 @@ export type Database = {
         Row: ScheduleGame & { updated_at: string };
         Insert: ScheduleGame;
         Update: Partial<ScheduleGame>;
+      };
+      polls: {
+        Row: Omit<Poll, 'options' | 'total_votes'>;
+        Insert: Omit<Poll, 'id' | 'options' | 'total_votes' | 'created_at'>;
+        Update: Partial<Omit<Poll, 'id' | 'options' | 'total_votes' | 'created_at'>>;
+      };
+      poll_options: {
+        Row: PollOption;
+        Insert: Omit<PollOption, 'id'>;
+        Update: Partial<Omit<PollOption, 'id' | 'poll_id'>>;
+      };
+      poll_votes: {
+        Row: PollVote;
+        Insert: Omit<PollVote, 'id' | 'created_at'>;
+        Update: never;
       };
     };
   };
