@@ -72,7 +72,7 @@ export function NotificationBell() {
 
     if (!error && data) {
       setNotifications(data as Notification[]);
-      setUnreadCount(data.filter((n) => !n.is_read).length);
+      setUnreadCount(data.filter(n => !n.is_read).length);
     }
     setLoading(false);
   }, [user, supabase]);
@@ -93,10 +93,10 @@ export function NotificationBell() {
           table: 'notifications',
           filter: `user_id=eq.${user.id}`,
         },
-        (payload) => {
+        payload => {
           const newNotification = payload.new as Notification;
-          setNotifications((prev) => [newNotification, ...prev].slice(0, 20));
-          setUnreadCount((prev) => prev + 1);
+          setNotifications(prev => [newNotification, ...prev].slice(0, 20));
+          setUnreadCount(prev => prev + 1);
         }
       )
       .on(
@@ -107,14 +107,14 @@ export function NotificationBell() {
           table: 'notifications',
           filter: `user_id=eq.${user.id}`,
         },
-        (payload) => {
+        payload => {
           const updatedNotification = payload.new as Notification;
-          setNotifications((prev) =>
-            prev.map((n) => (n.id === updatedNotification.id ? updatedNotification : n))
+          setNotifications(prev =>
+            prev.map(n => (n.id === updatedNotification.id ? updatedNotification : n))
           );
           // Recalculate unread count
-          setNotifications((prev) => {
-            setUnreadCount(prev.filter((n) => !n.is_read).length);
+          setNotifications(prev => {
+            setUnreadCount(prev.filter(n => !n.is_read).length);
             return prev;
           });
         }
@@ -136,10 +136,10 @@ export function NotificationBell() {
       .eq('user_id', user.id);
 
     if (!error) {
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === notificationId ? { ...n, is_read: true } : n))
+      setNotifications(prev =>
+        prev.map(n => (n.id === notificationId ? { ...n, is_read: true } : n))
       );
-      setUnreadCount((prev) => Math.max(0, prev - 1));
+      setUnreadCount(prev => Math.max(0, prev - 1));
     }
   };
 
@@ -153,7 +153,7 @@ export function NotificationBell() {
       .eq('is_read', false);
 
     if (!error) {
-      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
       setUnreadCount(0);
     }
   };
@@ -189,7 +189,7 @@ export function NotificationBell() {
               variant="ghost"
               size="sm"
               className="h-auto px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
-              onClick={(e) => {
+              onClick={e => {
                 e.preventDefault();
                 markAllAsRead();
               }}
@@ -206,12 +206,10 @@ export function NotificationBell() {
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-mariners-teal border-t-transparent" />
           </div>
         ) : notifications.length === 0 ? (
-          <div className="py-8 text-center text-sm text-muted-foreground">
-            No notifications yet
-          </div>
+          <div className="py-8 text-center text-sm text-muted-foreground">No notifications yet</div>
         ) : (
           <div className="max-h-[400px] overflow-y-auto">
-            {notifications.map((notification) => {
+            {notifications.map(notification => {
               const Icon = notificationIcons[notification.type] || Bell;
               return (
                 <DropdownMenuItem

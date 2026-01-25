@@ -11,9 +11,10 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
+  viewportFit: 'cover',
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#0C2C56' },
-    { media: '(prefers-color-scheme: dark)', color: '#0C2C56' },
+    { media: '(prefers-color-scheme: light)', color: '#005c5c' },
+    { media: '(prefers-color-scheme: dark)', color: '#005c5c' },
   ],
 };
 
@@ -64,8 +65,22 @@ export const metadata: Metadata = {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },
       { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png' },
     ],
-    apple: '/apple-touch-icon.png',
+    apple: [
+      { url: '/apple-touch-icon.png' },
+      { url: '/icons/icon-152x152.png', sizes: '152x152' },
+      { url: '/icons/icon-192x192.png', sizes: '180x180' },
+    ],
+    other: [
+      { rel: 'mask-icon', url: '/icon.svg', color: '#005c5c' },
+    ],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'TridentFans',
   },
   manifest: '/manifest.json',
 };

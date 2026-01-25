@@ -598,3 +598,105 @@ CREATE POLICY "Only admins can delete historical moments" ON historical_moments
   FOR DELETE USING (
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
   );
+
+-- ============================================
+-- EMAIL PREFERENCES & DIGEST SYSTEM
+-- ============================================
+
+CREATE TABLE email_preferences (
+  user_id UUID PRIMARY KEY REFERENCES profiles(id) ON DELETE CASCADE,
+  weekly_digest BOOLEAN DEFAULT true,
+  digest_day TEXT DEFAULT 'sunday' CHECK (digest_day IN ('monday', 'friday', 'sunday')),
+  include_predictions BOOLEAN DEFAULT true,
+  include_leaderboard BOOLEAN DEFAULT true,
+  include_forum BOOLEAN DEFAULT true,
+  include_news BOOLEAN DEFAULT true,
+  include_upcoming_games BOOLEAN DEFAULT true,
+  email_verified BOOLEAN DEFAULT false,
+  unsubscribe_token TEXT NOT NULL UNIQUE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE digest_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  email_type TEXT NOT NULL CHECK (email_type IN ('weekly_digest', 'game_reminder', 'prediction_result')),
+  sent_at TIMESTAMPTZ DEFAULT NOW(),
+  opened_at TIMESTAMPTZ,
+  clicked_at TIMESTAMPTZ,
+  metadata JSONB DEFAULT '{}'
+);
+
+-- Indexes for email tables
+CREATE INDEX idx_email_preferences_digest_day ON email_preferences(digest_day) WHERE weekly_digest = true;
+CREATE INDEX idx_email_preferences_verified ON email_preferences(email_verified) WHERE weekly_digest = true;
+CREATE INDEX idx_digest_logs_user ON digest_logs(user_id, sent_at DESC);
+CREATE INDEX idx_digest_logs_type ON digest_logs(email_type, sent_at DESC);
+CREATE INDEX idx_email_preferences_unsubscribe ON email_preferences(unsubscribe_token);
+
+-- RLS for email_preferences
+ALTER TABLE email_preferences ENABLE ROW LEVEL SECURITY;
+ALTER TABLE digest_logs ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own email preferences" ON email_preferences
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own email preferences" ON email_preferences
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own email preferences" ON email_preferences
+  FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Admins can view all email preferences" ON email_preferences
+  FOR SELECT USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+  );
+
+CREATE POLICY "Users can view own digest logs" ON digest_logs
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Admins can view all digest logs" ON digest_logs
+  FOR SELECT USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+  );
+
+CREATE POLICY "System can insert digest logs" ON digest_logs
+  FOR INSERT WITH CHECK (true);
+
+-- Trigger to auto-update timestamps
+CREATE TRIGGER trigger_email_preferences_updated
+BEFORE UPDATE ON email_preferences
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at();
+
+-- Function to generate random unsubscribe token
+CREATE OR REPLACE FUNCTION generate_unsubscribe_token()
+RETURNS TEXT AS $$
+DECLARE
+  chars TEXT := 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  result TEXT := '';
+  i INTEGER;
+BEGIN
+  FOR i IN 1..32 LOOP
+    result := result || substr(chars, floor(random() * length(chars) + 1)::integer, 1);
+  END LOOP;
+  RETURN result;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to create default email preferences for new users
+CREATE OR REPLACE FUNCTION create_default_email_preferences()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO email_preferences (user_id, unsubscribe_token)
+  VALUES (NEW.id, generate_unsubscribe_token())
+  ON CONFLICT (user_id) DO NOTHING;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_create_email_preferences
+AFTER INSERT ON profiles
+FOR EACH ROW
+EXECUTE FUNCTION create_default_email_preferences();

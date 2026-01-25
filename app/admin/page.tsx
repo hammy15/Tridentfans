@@ -5,26 +5,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Settings,
   Bot,
   Trophy,
   MessageSquare,
   Users,
-  BarChart3,
   Save,
   RefreshCw,
   Eye,
-  User,
   ToggleLeft,
   ToggleRight,
   Database,
   CheckCircle,
   Loader2,
-  Calendar,
-  GitCompare,
-  UserCheck,
   Mail,
 } from 'lucide-react';
 import { DEFAULT_BOT_CONFIGS, BOT_PRESETS } from '@/lib/ai-bots';
@@ -462,63 +456,12 @@ function KnowledgeBasePanel({ adminPassword }: { adminPassword: string }) {
   );
 }
 
-export default function AdminPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [password, setPassword] = useState('');
-  const [adminPassword, setAdminPassword] = useState('');
-
-  // Simple password protection (in production, use proper auth)
-  const handleLogin = () => {
-    if (password === 'mariners2026' || password === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
-      setIsAuthenticated(true);
-      setAdminPassword(password);
-    } else {
-      alert('Invalid password');
-    }
-  };
-
-  if (!isAuthenticated) {
-    return (
-      <div className="container mx-auto px-4 py-8 max-w-md">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Settings className="h-5 w-5" />
-              Admin Access
-            </CardTitle>
-            <CardDescription>Enter the admin password to continue</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="Password"
-              onKeyDown={e => e.key === 'Enter' && handleLogin()}
-            />
-            <Button variant="mariners" className="w-full" onClick={handleLogin}>
-              Login
-            </Button>
-            <p className="text-xs text-center text-muted-foreground">Demo password: mariners2026</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
+// Dashboard Component with quick stats
+function AdminDashboard() {
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold flex items-center gap-3">
-          <Settings className="h-8 w-8 text-mariners-teal" />
-          Admin Dashboard
-        </h1>
-        <p className="mt-2 text-muted-foreground">Manage bots, predictions, users, and content</p>
-      </div>
-
+    <div className="space-y-6">
       {/* Quick Stats */}
-      <div className="grid gap-4 md:grid-cols-4 mb-8">
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-4">
@@ -565,155 +508,185 @@ export default function AdminPage() {
         </Card>
       </div>
 
-      <Tabs defaultValue="presence">
-        <TabsList className="mb-6">
-          <TabsTrigger value="presence">
-            <User className="mr-2 h-4 w-4" />
-            Your Presence
-          </TabsTrigger>
-          <TabsTrigger value="moose">
-            <Bot className="mr-2 h-4 w-4" />
-            Moose AI
-          </TabsTrigger>
-          <TabsTrigger value="predictions">
-            <Trophy className="mr-2 h-4 w-4" />
-            Predictions
-          </TabsTrigger>
-          <TabsTrigger value="forum">
-            <MessageSquare className="mr-2 h-4 w-4" />
-            Forum
-          </TabsTrigger>
-          <TabsTrigger value="game-threads">
-            <Calendar className="mr-2 h-4 w-4" />
-            Game Threads
-          </TabsTrigger>
-          <TabsTrigger value="analytics">
-            <BarChart3 className="mr-2 h-4 w-4" />
-            Analytics
-          </TabsTrigger>
-          <TabsTrigger value="history">
-            <Calendar className="mr-2 h-4 w-4" />
-            History
-          </TabsTrigger>
-          <TabsTrigger value="player-compare">
-            <GitCompare className="mr-2 h-4 w-4" />
-            Player Compare
-          </TabsTrigger>
-          <TabsTrigger value="prospects">
-            <UserCheck className="mr-2 h-4 w-4" />
-            Prospects
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Your Presence Tab - Bot Mode Toggles */}
-        <TabsContent value="presence">
-          <div className="max-w-2xl">
-            <Card>
-              <CardHeader>
-                <CardTitle>Your Availability</CardTitle>
-                <CardDescription>
-                  When you&apos;re away, AI can respond on your behalf using your personality.
-                  Toggle off when you want to respond personally.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <BotModeToggle
-                  personId="captain_hammy"
-                  name="Captain Hammy"
-                  emoji="🧢"
-                  adminPassword={adminPassword}
-                />
-                <BotModeToggle
-                  personId="spartan"
-                  name="Spartan"
-                  emoji="⚔️"
-                  adminPassword={adminPassword}
-                />
-              </CardContent>
-            </Card>
-
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle>How It Works</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm text-muted-foreground">
-                <p>
-                  <strong className="text-foreground">AI Mode ON:</strong> When someone messages
-                  you, the AI responds using your personality and knowledge. Seamless - users
-                  won&apos;t know the difference.
-                </p>
-                <p>
-                  <strong className="text-foreground">AI Mode OFF:</strong> Messages wait for your
-                  personal response. Use this when you want to engage directly with fans.
-                </p>
-                <p>
-                  <strong className="text-foreground">Learning:</strong> The AI learns from your
-                  past conversations to better match your communication style over time.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        {/* Marty Moose Configuration Tab */}
-        <TabsContent value="moose">
-          <div className="max-w-4xl">
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <span className="text-2xl">🫎</span>
-                  Marty Moose - Site Manager
-                </CardTitle>
-                <CardDescription>
-                  Marty is TridentFans&apos; clubhouse manager - the most knowledgeable and helpful
-                  member of the team. He&apos;s available 24/7 to help fans with anything
-                  Mariners-related.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            {/* Knowledge Base Section */}
-            <KnowledgeBasePanel adminPassword={adminPassword} />
-
-            <BotConfigPanel botId="moose" />
-          </div>
-        </TabsContent>
-
-        {/* Predictions Tab */}
-        <TabsContent value="predictions">
-          <PredictionManager adminPassword={adminPassword} />
-        </TabsContent>
-
-        {/* Forum Tab */}
-        <TabsContent value="forum">
-          <ForumModeration adminPassword={adminPassword} />
-        </TabsContent>
-
-        {/* Game Threads Tab */}
-        <TabsContent value="game-threads">
-          <GameThreadManager adminPassword={adminPassword} />
-        </TabsContent>
-
-        {/* Analytics Tab */}
-        <TabsContent value="analytics">
-          <AnalyticsDashboard />
-        </TabsContent>
-
-        {/* History Tab */}
-        <TabsContent value="history">
-          <HistoryAdmin adminPassword={adminPassword} />
-        </TabsContent>
-
-        {/* Player Compare Tab */}
-        <TabsContent value="player-compare">
-          <PlayerCompareAdmin />
-        </TabsContent>
-
-        {/* Prospects Tab */}
-        <TabsContent value="prospects">
-          <ProspectsAdmin adminPassword={adminPassword} />
-        </TabsContent>
-      </Tabs>
+      {/* Analytics Dashboard */}
+      <AnalyticsDashboard />
     </div>
+  );
+}
+
+// Bots Section with presence toggles and Moose config
+function BotsSection({ adminPassword }: { adminPassword: string }) {
+  return (
+    <div className="space-y-8">
+      {/* Your Presence */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Your Availability</CardTitle>
+          <CardDescription>
+            When you&apos;re away, AI can respond on your behalf using your personality.
+            Toggle off when you want to respond personally.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <BotModeToggle
+            personId="captain_hammy"
+            name="Captain Hammy"
+            emoji="🧢"
+            adminPassword={adminPassword}
+          />
+          <BotModeToggle
+            personId="spartan"
+            name="Spartan"
+            emoji="⚔️"
+            adminPassword={adminPassword}
+          />
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>How It Works</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm text-muted-foreground">
+          <p>
+            <strong className="text-foreground">AI Mode ON:</strong> When someone messages
+            you, the AI responds using your personality and knowledge. Seamless - users
+            won&apos;t know the difference.
+          </p>
+          <p>
+            <strong className="text-foreground">AI Mode OFF:</strong> Messages wait for your
+            personal response. Use this when you want to engage directly with fans.
+          </p>
+          <p>
+            <strong className="text-foreground">Learning:</strong> The AI learns from your
+            past conversations to better match your communication style over time.
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Marty Moose Configuration */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <span className="text-2xl">🫎</span>
+            Marty Moose - Site Manager
+          </CardTitle>
+          <CardDescription>
+            Marty is TridentFans&apos; clubhouse manager - the most knowledgeable and helpful
+            member of the team. He&apos;s available 24/7 to help fans with anything
+            Mariners-related.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+
+      {/* Knowledge Base Section */}
+      <KnowledgeBasePanel adminPassword={adminPassword} />
+
+      <BotConfigPanel botId="moose" />
+    </div>
+  );
+}
+
+export default function AdminPage() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [activeSection, setActiveSection] = useState<AdminSection>('dashboard');
+
+  // Simple password protection (in production, use proper auth)
+  const handleLogin = () => {
+    if (password === 'mariners2026' || password === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
+      setIsAuthenticated(true);
+      setAdminPassword(password);
+    } else {
+      alert('Invalid password');
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-muted/30">
+        <Card className="w-full max-w-md mx-4">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              Admin Access
+            </CardTitle>
+            <CardDescription>Enter the admin password to continue</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Input
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="Password"
+              onKeyDown={e => e.key === 'Enter' && handleLogin()}
+            />
+            <Button variant="mariners" className="w-full" onClick={handleLogin}>
+              Login
+            </Button>
+            <p className="text-xs text-center text-muted-foreground">Demo password: mariners2026</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Render content based on active section
+  const renderContent = () => {
+    switch (activeSection) {
+      case 'dashboard':
+        return <AdminDashboard />;
+
+      case 'bots':
+        return <BotsSection adminPassword={adminPassword} />;
+
+      case 'predictions':
+        return <PredictionManager adminPassword={adminPassword} />;
+
+      case 'forum':
+        return (
+          <div className="space-y-6">
+            <ForumModeration adminPassword={adminPassword} />
+            <GameThreadManager adminPassword={adminPassword} />
+          </div>
+        );
+
+      case 'polls':
+        return <PollsAdmin adminPassword={adminPassword} />;
+
+      case 'history':
+        return <HistoryAdmin adminPassword={adminPassword} />;
+
+      case 'prospects':
+        return <ProspectsAdmin adminPassword={adminPassword} />;
+
+      case 'email':
+        return (
+          <AdminPlaceholder
+            title="Email Management"
+            description="Configure email templates, manage campaigns, and view email analytics."
+            icon={Mail}
+          />
+        );
+
+      case 'notifications':
+        return <NotificationAdmin />;
+
+      case 'players':
+        return <PlayerCompareAdmin />;
+
+      case 'settings':
+        return <AdminSettings adminPassword={adminPassword} />;
+
+      default:
+        return <AdminDashboard />;
+    }
+  };
+
+  return (
+    <AdminLayout activeSection={activeSection} onSectionChange={setActiveSection}>
+      {renderContent()}
+    </AdminLayout>
   );
 }
