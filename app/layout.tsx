@@ -3,6 +3,7 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { PWAProvider } from '@/components/pwa/PWAProvider';
+import { PostLoginInstallPrompt } from '@/components/pwa/PostLoginInstallPrompt';
 import { ThemeProvider } from '@/components/theme/ThemeProvider';
 import { AnimatedSplash } from '@/components/onboarding/AnimatedSplash';
 import './globals.css';
@@ -98,6 +99,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <Footer />
               </div>
               <AnimatedSplash />
+              <PostLoginInstallPrompt />
             </PWAProvider>
           </AuthProvider>
         </ThemeProvider>
