@@ -3,7 +3,7 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { PWAProvider } from '@/components/pwa/PWAProvider';
-import { QuickTour } from '@/components/onboarding/QuickTour';
+import { AnimatedSplash } from '@/components/onboarding/AnimatedSplash';
 import './globals.css';
 
 export const viewport: Viewport = {
@@ -80,7 +80,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <main className="flex-1">{children}</main>
               <Footer />
             </div>
-            <QuickTour />
+            <AnimatedSplash />
           </PWAProvider>
         </AuthProvider>
       </body>
