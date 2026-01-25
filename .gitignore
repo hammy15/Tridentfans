@@ -45,3 +45,12 @@ next-env.d.ts
 *.pem
 .vercel
 .env*.local
+
+# iOS / Capacitor
+ios/App/Pods/
+ios/App/App/public/
+ios/App/build/
+ios/App/DerivedData/
+*.xcuserdata
+*.xcworkspacedata
+ios/capacitor-cordova-ios-plugins/
