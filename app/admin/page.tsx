@@ -23,6 +23,8 @@ import {
   CheckCircle,
   Loader2,
   Calendar,
+  History,
+  GitCompare,
 } from 'lucide-react';
 import { DEFAULT_BOT_CONFIGS, BOT_PRESETS } from '@/lib/ai-bots';
 import type { BotId, BotTraits } from '@/types';
@@ -30,6 +32,9 @@ import { PredictionManager } from '@/components/admin/PredictionManager';
 import { ForumModeration } from '@/components/admin/ForumModeration';
 import { AnalyticsDashboard } from '@/components/admin/AnalyticsDashboard';
 import { GameThreadManager } from '@/components/admin/GameThreadManager';
+import { HistoryAdmin } from '@/components/admin/HistoryAdmin';
+import { PlayerCompareAdmin } from '@/components/admin/PlayerCompareAdmin';
+import { ProspectsAdmin } from '@/components/admin/ProspectsAdmin';
 
 const _botIds: BotId[] = ['moose', 'captain_hammy', 'spartan'];
 
@@ -581,6 +586,14 @@ export default function AdminPage() {
             <BarChart3 className="mr-2 h-4 w-4" />
             Analytics
           </TabsTrigger>
+          <TabsTrigger value="history">
+            <History className="mr-2 h-4 w-4" />
+            History
+          </TabsTrigger>
+          <TabsTrigger value="player-compare">
+            <GitCompare className="mr-2 h-4 w-4" />
+            Player Compare
+          </TabsTrigger>
         </TabsList>
 
         {/* Your Presence Tab - Bot Mode Toggles */}
@@ -675,6 +688,16 @@ export default function AdminPage() {
         {/* Analytics Tab */}
         <TabsContent value="analytics">
           <AnalyticsDashboard />
+        </TabsContent>
+
+        {/* History Tab */}
+        <TabsContent value="history">
+          <HistoryAdmin adminPassword={adminPassword} />
+        </TabsContent>
+
+        {/* Player Compare Tab */}
+        <TabsContent value="player-compare">
+          <PlayerCompareAdmin />
         </TabsContent>
       </Tabs>
     </div>
