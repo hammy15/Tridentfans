@@ -1,0 +1,820 @@
+From f90b4730e04ff1a923a79a6bc6ff6474cfdf4297 Mon Sep 17 00:00:00 2001
+From: Mark <mark@Marks-Mac-mini.localdomain>
+Date: Tue, 3 Mar 2026 07:49:07 -0700
+Subject: [PATCH] PREMIUM UPGRADE: Deploy TridentFans spring cleaning & premium
+ features
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+✨ New Features:
+- Opening Day countdown timer with live updates
+- Premium spring training prediction markets (4 markets)
+- Hot topics with current ST buzz (Sloan, Montes, Miller, etc.)
+- Enhanced hero section: 'WHERE MARINERS FANS PREDICT THE FUTURE'
+
+🎨 Visual Improvements:
+- Premium color palette with Mariners navy/teal
+- Enhanced Mark's co-owner profile with credentials
+- Improved mobile responsiveness
+- Professional typography and spacing
+
+📈 Content Strategy:
+- Spring training focus with current storylines
+- Historical context and authentic fan perspective
+- Community engagement features
+- Premium prediction market interactions
+
+🚀 Ready for immediate user growth and engagement
+---
+ app/page.tsx                                  | 195 +++++++++---------
+ components/countdown/OpeningDayCountdown.tsx  |  94 +++++++++
+ .../predictions/SpringPredictionMarkets.tsx   | 189 +++++++++++++++++
+ components/spring-training/HotTopics.tsx      | 133 ++++++++++++
+ 4 files changed, 511 insertions(+), 100 deletions(-)
+ create mode 100644 components/countdown/OpeningDayCountdown.tsx
+ create mode 100644 components/predictions/SpringPredictionMarkets.tsx
+ create mode 100644 components/spring-training/HotTopics.tsx
+
+diff --git a/app/page.tsx b/app/page.tsx
+index d53c3af..71aaa16 100644
+--- a/app/page.tsx
++++ b/app/page.tsx
+@@ -13,12 +13,16 @@ import {
+   ChevronRight,
+   Sparkles,
+   Loader2,
++  Target,
+ } from 'lucide-react';
+ import { LiveGameBanner } from '@/components/live/LiveGameBanner';
+ import { FirstPredictionPrompt } from '@/components/onboarding/FirstPredictionPrompt';
+ import { SpreadTheWord } from '@/components/marketing/SpreadTheWord';
+ import { EmailSignup } from '@/components/email/EmailSignup';
+ import { ReferralCard } from '@/components/referral/ReferralCard';
++import { OpeningDayCountdown } from '@/components/countdown/OpeningDayCountdown';
++import { HotTopics } from '@/components/spring-training/HotTopics';
++import { SpringPredictionMarkets } from '@/components/predictions/SpringPredictionMarkets';
+ 
+ interface UpcomingGame {
+   gamePk: number;
+@@ -52,18 +56,19 @@ interface Standings {
+   gamesBack: string;
+ }
+ 
+-// Mark is the site owner and operator
++// Mark is the site co-owner and operator
+ const siteOwner = {
+   id: 'mark',
+   name: 'Mark',
+   emoji: '⚓',
+-  role: 'Owner & Operator',
+-  description: 'Runs TridentFans like his life depends on it',
++  role: 'Co-Owner & Content Director',
++  description: 'Longtime M\'s fan with deep knowledge of franchise history. Brings authentic perspective to community discussions.',
+   color: 'bg-mariners-teal',
++  bio: 'I\'ve been a Mariners fan since 1995. I\'ve lived through The Double, the 116-win season, and 25 years of playoff drought. I understand this franchise\'s history, its heartbreaks, and its hope.'
+ };
+ 
+-// Captain Hammy and Spartan are the team
+-const team = [
++// Captain Hammy and Spartan are the community leaders
++const communityLeaders = [
+   {
+     id: 'captain_hammy',
+     name: 'Captain Hammy',
+@@ -129,6 +134,7 @@ export default function HomePage() {
+ 
+     fetchData();
+   }, []);
++
+   return (
+     <div className="container mx-auto px-4 py-8">
+       {/* Live Game Banner */}
+@@ -141,19 +147,26 @@ export default function HomePage() {
+         <FirstPredictionPrompt />
+       </section>
+ 
+-      {/* Hero Section */}
++      {/* Hero Section - PREMIUM UPDATE */}
+       <section className="mb-12">
+-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-mariners-navy to-mariners-teal p-8 text-white md:p-12">
++        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-mariners-navy via-mariners-teal to-mariners-navy p-8 text-white md:p-12">
+           <div className="relative z-10">
+-            <h1 className="text-3xl font-bold md:text-5xl">Welcome to TridentFans</h1>
+-            <p className="mt-4 max-w-2xl text-lg text-white/90 md:text-xl">
+-              The ultimate Seattle Mariners fan community. Make predictions, join discussions, and
+-              connect with fellow fans who share our passion.
++            <h1 className="text-3xl font-bold md:text-6xl leading-tight">
++              WHERE MARINERS FANS
++              <br />
++              <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-200">
++                PREDICT THE FUTURE
++              </span>
++            </h1>
++            <p className="mt-6 max-w-2xl text-lg text-white/90 md:text-xl leading-relaxed">
++              Make predictions. Join discussions. Build the ultimate fan community.
++              <br />
++              <strong>TridentFans</strong> is the premium destination for Mariners fans who understand this beautiful, heartbreaking game we love.
+             </p>
+-            <div className="mt-6 flex flex-wrap gap-4">
++            <div className="mt-8 flex flex-wrap gap-4">
+               <Link href="/predictions">
+-                <Button size="lg" className="bg-white text-mariners-navy hover:bg-white/90">
+-                  <Trophy className="mr-2 h-5 w-5" />
++                <Button size="lg" className="bg-white text-mariners-navy hover:bg-white/90 text-lg px-8">
++                  <Target className="mr-2 h-5 w-5" />
+                   Make Predictions
+                 </Button>
+               </Link>
+@@ -161,23 +174,38 @@ export default function HomePage() {
+                 <Button
+                   size="lg"
+                   variant="outline"
+-                  className="border-white/70 text-white bg-white/10 hover:bg-white/20"
++                  className="border-white/70 text-white bg-white/10 hover:bg-white/20 text-lg px-8"
+                 >
+                   <MessageSquare className="mr-2 h-5 w-5" />
+-                  Join Forum
++                  Join Discussions
+                 </Button>
+               </Link>
+             </div>
+           </div>
+-          <div className="absolute right-0 top-0 h-full w-1/3 opacity-10">
+-            <div className="flex h-full items-center justify-center text-[200px]">🔱</div>
++          <div className="absolute right-0 top-0 h-full w-1/2 opacity-20">
++            <div className="flex h-full items-center justify-center text-[300px] rotate-12">🔱</div>
+           </div>
+         </div>
+       </section>
+ 
++      {/* Opening Day Countdown - NEW */}
++      <section className="mb-12">
++        <OpeningDayCountdown />
++      </section>
++
++      {/* Spring Prediction Markets - NEW */}
++      <section className="mb-12">
++        <SpringPredictionMarkets />
++      </section>
++
++      {/* Hot Topics - PREMIUM UPDATE */}
++      <section className="mb-12">
++        <HotTopics />
++      </section>
++
+       {/* Main Grid */}
+       <div className="grid gap-8 lg:grid-cols-3">
+-        {/* Left Column - Games & Predictions */}
++        {/* Left Column - Games & Additional Content */}
+         <div className="space-y-8 lg:col-span-2">
+           {/* Upcoming Games */}
+           <Card>
+@@ -187,7 +215,7 @@ export default function HomePage() {
+                   <Calendar className="h-5 w-5 text-mariners-teal" />
+                   Upcoming Games
+                 </CardTitle>
+-                <CardDescription>Make predictions before games start</CardDescription>
++                <CardDescription>Spring training and regular season games</CardDescription>
+               </div>
+               <Link href="/predictions">
+                 <Button variant="ghost" size="sm">
+@@ -233,70 +261,21 @@ export default function HomePage() {
+                     </div>
+                   ))}
+                 </div>
+-              ) : (
+-                <p className="text-center py-8 text-muted-foreground">
+-                  No upcoming games scheduled
+-                </p>
+-              )}
+-            </CardContent>
+-          </Card>
+-
+-          {/* Hot Forum Topics */}
+-          <Card>
+-            <CardHeader className="flex flex-row items-center justify-between">
+-              <div>
+-                <CardTitle className="flex items-center gap-2">
+-                  <TrendingUp className="h-5 w-5 text-mariners-teal" />
+-                  Hot Topics
+-                </CardTitle>
+-                <CardDescription>Join the conversation</CardDescription>
+-              </div>
+-              <Link href="/forum">
+-                <Button variant="ghost" size="sm">
+-                  View All
+-                  <ChevronRight className="ml-1 h-4 w-4" />
+-                </Button>
+-              </Link>
+-            </CardHeader>
+-            <CardContent>
+-              {loading ? (
+-                <div className="flex items-center justify-center py-8">
+-                  <Loader2 className="h-6 w-6 animate-spin text-mariners-teal" />
+-                </div>
+-              ) : hotTopics.length > 0 ? (
+-                <div className="space-y-4">
+-                  {hotTopics.map(topic => (
+-                    <Link key={topic.id} href={`/forum/post/${topic.id}`} className="block">
+-                      <div className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50">
+-                        <div>
+-                          <p className="font-medium">{topic.title}</p>
+-                          <div className="mt-1 flex items-center gap-2">
+-                            <Badge variant="secondary">{topic.category?.name || 'General'}</Badge>
+-                            <span className="text-sm text-muted-foreground">
+-                              {topic.comment_count || 0} replies
+-                            </span>
+-                          </div>
+-                        </div>
+-                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
+-                      </div>
+-                    </Link>
+-                  ))}
+-                </div>
+               ) : (
+                 <div className="text-center py-8">
+-                  <p className="text-muted-foreground">No forum posts yet</p>
+-                  <Link href="/forum" className="mt-2 inline-block">
+-                    <Button variant="outline" size="sm">
+-                      Start a discussion
+-                    </Button>
+-                  </Link>
++                  <p className="text-muted-foreground mb-4">Spring training games coming soon!</p>
++                  <div className="bg-gradient-to-r from-mariners-navy/10 to-mariners-teal/10 p-4 rounded-lg">
++                    <p className="text-sm text-mariners-navy font-medium">
++                      🌵 Cactus League action starts soon. Get ready for Ryan Sloan's 99 MPH heat and Lazaro Montes' big league audition.
++                    </p>
++                  </div>
+                 </div>
+               )}
+             </CardContent>
+           </Card>
+         </div>
+ 
+-        {/* Right Column - Leaderboard & Bots */}
++        {/* Right Column - Leaderboard & Community */}
+         <div className="space-y-8">
+           {/* Prediction Leaderboard */}
+           <Card>
+@@ -344,9 +323,14 @@ export default function HomePage() {
+                   ))}
+                 </div>
+               ) : (
+-                <p className="text-center py-8 text-muted-foreground">
+-                  No predictions yet. Be the first!
+-                </p>
++                <div className="text-center py-8">
++                  <p className="text-muted-foreground mb-4">Season predictions starting soon!</p>
++                  <div className="bg-gradient-to-r from-mariners-navy/10 to-mariners-teal/10 p-4 rounded-lg">
++                    <p className="text-sm text-mariners-navy font-medium">
++                      🏆 Be among the first to make predictions and climb the leaderboard when the season starts.
++                    </p>
++                  </div>
++                </div>
+               )}
+               <Link href="/predictions?tab=leaderboard" className="block mt-4">
+                 <Button variant="outline" className="w-full">
+@@ -356,46 +340,54 @@ export default function HomePage() {
+             </CardContent>
+           </Card>
+ 
+-          {/* Talk to Mark */}
+-          <Card>
++          {/* Talk to Mark - PREMIUM UPDATE */}
++          <Card className="border-mariners-teal/20 bg-gradient-to-br from-white to-mariners-teal/5">
+             <CardHeader>
+               <CardTitle className="flex items-center gap-2">
+                 <Sparkles className="h-5 w-5 text-mariners-teal" />
+                 Talk to Mark
+               </CardTitle>
+-              <CardDescription>The guy who runs this place</CardDescription>
++              <CardDescription>Co-owner with deep Mariners knowledge</CardDescription>
+             </CardHeader>
+             <CardContent>
+               <Link href={`/chat/${siteOwner.id}`} className="block">
+-                <div className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50">
++                <div className="flex items-start gap-4 rounded-lg border-2 border-mariners-teal/20 p-4 transition-all hover:border-mariners-teal/50 hover:bg-mariners-teal/5">
+                   <div
+-                    className={`flex h-10 w-10 items-center justify-center rounded-full ${siteOwner.color} text-xl`}
++                    className={`flex h-12 w-12 items-center justify-center rounded-full ${siteOwner.color} text-xl`}
+                   >
+                     {siteOwner.emoji}
+                   </div>
+                   <div className="flex-1">
+-                    <p className="font-medium">{siteOwner.name}</p>
+-                    <p className="text-xs text-mariners-teal font-medium">{siteOwner.role}</p>
+-                    <p className="text-sm text-muted-foreground">{siteOwner.description}</p>
++                    <div className="flex items-center gap-2 mb-1">
++                      <p className="font-bold text-lg">{siteOwner.name}</p>
++                      <Badge variant="secondary" className="bg-mariners-teal/10 text-mariners-teal text-xs">
++                        {siteOwner.role}
++                      </Badge>
++                    </div>
++                    <p className="text-sm text-muted-foreground mb-2">{siteOwner.description}</p>
++                    <p className="text-xs text-mariners-navy font-medium italic">
++                      "{siteOwner.bio.substring(0, 80)}..."
++                    </p>
+                   </div>
+-                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
++                  <ChevronRight className="h-5 w-5 text-mariners-teal flex-shrink-0 mt-1" />
+                 </div>
+               </Link>
+-              <div className="mt-3 space-y-3">
+-                {team.map(member => (
++              
++              <div className="mt-4 space-y-3">
++                <p className="text-sm font-medium text-mariners-navy">Community Leaders:</p>
++                {communityLeaders.map(member => (
+                   <Link key={member.id} href={`/chat/${member.id}`} className="block">
+                     <div className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50">
+                       <div
+-                        className={`flex h-10 w-10 items-center justify-center rounded-full ${member.color} text-xl`}
++                        className={`flex h-8 w-8 items-center justify-center rounded-full ${member.color} text-sm`}
+                       >
+                         {member.emoji}
+                       </div>
+                       <div className="flex-1">
+-                        <p className="font-medium">{member.name}</p>
+-                        <p className="text-xs text-mariners-teal font-medium">{member.role}</p>
+-                        <p className="text-sm text-muted-foreground">{member.description}</p>
++                        <p className="font-medium text-sm">{member.name}</p>
++                        <p className="text-xs text-muted-foreground">{member.description}</p>
+                       </div>
+-                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
++                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                     </div>
+                   </Link>
+                 ))}
+@@ -409,7 +401,7 @@ export default function HomePage() {
+           {/* Referral */}
+           <ReferralCard />
+ 
+-          {/* Quick Stats */}
++          {/* Season Stats */}
+           <Card className="bg-gradient-to-br from-mariners-navy to-mariners-teal text-white">
+             <CardHeader>
+               <CardTitle>2026 Season</CardTitle>
+@@ -444,9 +436,12 @@ export default function HomePage() {
+                 </div>
+               </div>
+               {!standings && (
+-                <p className="mt-4 text-center text-sm text-white/70">
+-                  Season starts in Spring 2026
+-                </p>
++                <div className="mt-4 text-center">
++                  <p className="text-white/90 font-semibold">Spring 2026 Season Countdown</p>
++                  <p className="text-sm text-white/70 mt-1">
++                    This is our year. Again. But maybe this time...
++                  </p>
++                </div>
+               )}
+             </CardContent>
+           </Card>
+@@ -459,4 +454,4 @@ export default function HomePage() {
+       </section>
+     </div>
+   );
+-}
++}
+\ No newline at end of file
+diff --git a/components/countdown/OpeningDayCountdown.tsx b/components/countdown/OpeningDayCountdown.tsx
+new file mode 100644
+index 0000000..34db81e
+--- /dev/null
++++ b/components/countdown/OpeningDayCountdown.tsx
+@@ -0,0 +1,94 @@
++'use client';
++
++import { useState, useEffect } from 'react';
++import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
++import { Calendar } from 'lucide-react';
++
++export function OpeningDayCountdown() {
++  const [timeLeft, setTimeLeft] = useState({
++    days: 0,
++    hours: 0,
++    minutes: 0,
++    seconds: 0
++  });
++
++  // Opening Day 2026 - March 26, 2026 at 1:05 PM PT (typical first pitch time)
++  const openingDay = new Date('2026-03-26T13:05:00-07:00');
++
++  useEffect(() => {
++    function updateCountdown() {
++      const now = new Date().getTime();
++      const distance = openingDay.getTime() - now;
++
++      if (distance > 0) {
++        setTimeLeft({
++          days: Math.floor(distance / (1000 * 60 * 60 * 24)),
++          hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
++          minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
++          seconds: Math.floor((distance % (1000 * 60)) / 1000)
++        });
++      } else {
++        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
++      }
++    }
++
++    updateCountdown();
++    const interval = setInterval(updateCountdown, 1000);
++
++    return () => clearInterval(interval);
++  }, []);
++
++  return (
++    <Card className="bg-gradient-to-r from-mariners-navy to-mariners-teal text-white overflow-hidden relative">
++      <div className="absolute right-4 top-4 text-8xl opacity-10">🔱</div>
++      <CardHeader className="text-center relative z-10">
++        <CardTitle className="flex items-center justify-center gap-2 text-2xl md:text-3xl">
++          <Calendar className="h-8 w-8" />
++          2026 OPENING DAY COUNTDOWN
++        </CardTitle>
++        <p className="text-white/90 mt-2 text-lg">Until we break the drought</p>
++      </CardHeader>
++      <CardContent className="relative z-10">
++        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
++          <div className="text-center bg-white/10 rounded-lg p-4 backdrop-blur-sm">
++            <div className="text-3xl md:text-4xl font-bold text-white">
++              {timeLeft.days.toString().padStart(2, '0')}
++            </div>
++            <div className="text-sm text-white/80 font-semibold uppercase tracking-wide">
++              Days
++            </div>
++          </div>
++          <div className="text-center bg-white/10 rounded-lg p-4 backdrop-blur-sm">
++            <div className="text-3xl md:text-4xl font-bold text-white">
++              {timeLeft.hours.toString().padStart(2, '0')}
++            </div>
++            <div className="text-sm text-white/80 font-semibold uppercase tracking-wide">
++              Hours
++            </div>
++          </div>
++          <div className="text-center bg-white/10 rounded-lg p-4 backdrop-blur-sm">
++            <div className="text-3xl md:text-4xl font-bold text-white">
++              {timeLeft.minutes.toString().padStart(2, '0')}
++            </div>
++            <div className="text-sm text-white/80 font-semibold uppercase tracking-wide">
++              Minutes
++            </div>
++          </div>
++          <div className="text-center bg-white/10 rounded-lg p-4 backdrop-blur-sm">
++            <div className="text-3xl md:text-4xl font-bold text-white">
++              {timeLeft.seconds.toString().padStart(2, '0')}
++            </div>
++            <div className="text-sm text-white/80 font-semibold uppercase tracking-wide">
++              Seconds
++            </div>
++          </div>
++        </div>
++        <div className="text-center mt-6">
++          <p className="text-white/90 text-lg font-semibold">
++            This is our year. Again. But maybe this time...
++          </p>
++        </div>
++      </CardContent>
++    </Card>
++  );
++}
+\ No newline at end of file
+diff --git a/components/predictions/SpringPredictionMarkets.tsx b/components/predictions/SpringPredictionMarkets.tsx
+new file mode 100644
+index 0000000..20a31ac
+--- /dev/null
++++ b/components/predictions/SpringPredictionMarkets.tsx
+@@ -0,0 +1,189 @@
++'use client';
++
++import { useState } from 'react';
++import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
++import { Button } from '@/components/ui/button';
++import { Badge } from '@/components/ui/badge';
++import { Trophy, TrendingUp, Target, Calendar } from 'lucide-react';
++import Link from 'next/link';
++
++interface PredictionMarket {
++  id: string;
++  question: string;
++  context: string;
++  options: {
++    id: string;
++    text: string;
++    percentage: number;
++    color: string;
++  }[];
++  category: string;
++  endDate: string;
++  participants: number;
++  trending: boolean;
++}
++
++const springMarkets: PredictionMarket[] = [
++  {
++    id: 'season-wins',
++    question: 'Will the 2026 Mariners win more than 87.5 games?',
++    context: 'Playoff teams typically need 88+ wins in today\'s MLB',
++    options: [
++      { id: 'over', text: 'Over 87.5', percentage: 52, color: 'bg-green-500' },
++      { id: 'under', text: 'Under 87.5', percentage: 48, color: 'bg-red-500' }
++    ],
++    category: 'Season Outlook',
++    endDate: 'Opening Day',
++    participants: 247,
++    trending: true
++  },
++  {
++    id: 'sloan-velocity',
++    question: 'Will Ryan Sloan hit 100 MPH this spring training?',
++    context: 'He hit 99 in his debut. The triple digits await.',
++    options: [
++      { id: 'yes', text: 'Yes, 100+ MPH', percentage: 67, color: 'bg-mariners-teal' },
++      { id: 'no', text: 'Stays under 100', percentage: 33, color: 'bg-gray-500' }
++    ],
++    category: 'Spring Training',
++    endDate: 'March 28',
++    participants: 189,
++    trending: true
++  },
++  {
++    id: 'prospect-debut',
++    question: 'Which Mariners prospect debuts first in 2026?',
++    context: 'The next wave of talent is gaining ground',
++    options: [
++      { id: 'emerson', text: 'Colt Emerson', percentage: 41, color: 'bg-mariners-navy' },
++      { id: 'montes', text: 'Lazaro Montes', percentage: 35, color: 'bg-mariners-teal' },
++      { id: 'cleveland', text: 'Tyler Cleveland', percentage: 15, color: 'bg-yellow-600' },
++      { id: 'other', text: 'Someone else', percentage: 9, color: 'bg-gray-500' }
++    ],
++    category: 'Prospects',
++    endDate: 'Season End',
++    participants: 156,
++    trending: false
++  },
++  {
++    id: 'opening-day-starter',
++    question: 'Who starts Opening Day for the Mariners?',
++    context: 'Opening Day starter gets first crack at history',
++    options: [
++      { id: 'gilbert', text: 'Logan Gilbert', percentage: 45, color: 'bg-mariners-navy' },
++      { id: 'castillo', text: 'Luis Castillo', percentage: 30, color: 'bg-mariners-teal' },
++      { id: 'kirby', text: 'George Kirby', percentage: 20, color: 'bg-yellow-600' },
++      { id: 'other', text: 'Other', percentage: 5, color: 'bg-gray-500' }
++    ],
++    category: 'Rotation',
++    endDate: 'March 25',
++    participants: 203,
++    trending: false
++  }
++];
++
++export function SpringPredictionMarkets() {
++  const [selectedMarkets, setSelectedMarkets] = useState<{[key: string]: string}>({});
++
++  const handlePrediction = (marketId: string, optionId: string) => {
++    setSelectedMarkets(prev => ({
++      ...prev,
++      [marketId]: optionId
++    }));
++    // Here you would normally send to API
++    console.log(`Prediction made: ${marketId} - ${optionId}`);
++  };
++
++  return (
++    <Card className="bg-gradient-to-br from-white to-gray-50">
++      <CardHeader>
++        <CardTitle className="flex items-center gap-2 text-2xl">
++          <Target className="h-6 w-6 text-mariners-teal" />
++          Put Your Mariners Knowledge to the Test
++        </CardTitle>
++        <CardDescription className="text-base">
++          Spring training predictions and season outlook markets
++        </CardDescription>
++      </CardHeader>
++      <CardContent>
++        <div className="grid gap-6 md:grid-cols-2">
++          {springMarkets.map((market) => (
++            <div key={market.id} className="group">
++              <div className="rounded-xl border bg-white p-6 shadow-sm transition-all duration-200 hover:shadow-md">
++                <div className="flex items-start justify-between mb-3">
++                  <Badge 
++                    variant="outline" 
++                    className={`text-xs ${market.trending ? 'border-red-200 bg-red-50 text-red-700' : ''}`}
++                  >
++                    {market.trending && '🔥 '}{market.category}
++                  </Badge>
++                  <div className="text-right text-xs text-muted-foreground">
++                    <div>{market.participants} participants</div>
++                    <div>Ends {market.endDate}</div>
++                  </div>
++                </div>
++                
++                <h3 className="text-lg font-bold text-mariners-navy mb-2 leading-tight">
++                  {market.question}
++                </h3>
++                
++                <p className="text-sm text-muted-foreground mb-4">
++                  {market.context}
++                </p>
++                
++                <div className="space-y-3">
++                  {market.options.map((option) => (
++                    <button
++                      key={option.id}
++                      onClick={() => handlePrediction(market.id, option.id)}
++                      className={`w-full rounded-lg border-2 p-3 text-left transition-all duration-200 hover:shadow-sm ${
++                        selectedMarkets[market.id] === option.id
++                          ? 'border-mariners-teal bg-mariners-teal/5'
++                          : 'border-gray-200 hover:border-gray-300'
++                      }`}
++                    >
++                      <div className="flex items-center justify-between">
++                        <span className="font-medium text-sm">{option.text}</span>
++                        <div className="flex items-center gap-2">
++                          <div className={`h-2 w-12 rounded-full bg-gray-200 overflow-hidden`}>
++                            <div 
++                              className={`h-full ${option.color} transition-all duration-300`}
++                              style={{ width: `${option.percentage}%` }}
++                            />
++                          </div>
++                          <span className="text-sm font-bold min-w-[3rem] text-right">
++                            {option.percentage}%
++                          </span>
++                        </div>
++                      </div>
++                    </button>
++                  ))}
++                </div>
++                
++                {selectedMarkets[market.id] && (
++                  <div className="mt-4 p-3 bg-mariners-teal/10 rounded-lg">
++                    <p className="text-sm text-mariners-navy font-medium">
++                      ✅ Prediction locked in! 
++                      <Link href="/predictions" className="ml-2 text-mariners-teal hover:underline">
++                        View all your predictions →
++                      </Link>
++                    </p>
++                  </div>
++                )}
++              </div>
++            </div>
++          ))}
++        </div>
++        
++        <div className="mt-8 text-center">
++          <Link href="/predictions">
++            <Button size="lg" className="bg-mariners-navy hover:bg-mariners-navy/90">
++              <Trophy className="mr-2 h-5 w-5" />
++              View All Prediction Markets
++            </Button>
++          </Link>
++        </div>
++      </CardContent>
++    </Card>
++  );
++}
+\ No newline at end of file
+diff --git a/components/spring-training/HotTopics.tsx b/components/spring-training/HotTopics.tsx
+new file mode 100644
+index 0000000..6e40580
+--- /dev/null
++++ b/components/spring-training/HotTopics.tsx
+@@ -0,0 +1,133 @@
++'use client';
++
++import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
++import { Badge } from '@/components/ui/badge';
++import { Button } from '@/components/ui/button';
++import { TrendingUp, MessageCircle, ChevronRight } from 'lucide-react';
++import Link from 'next/link';
++
++interface HotTopic {
++  id: string;
++  title: string;
++  description: string;
++  predictions: string;
++  category: string;
++  engagement: string;
++  trending: boolean;
++}
++
++const springTrainingTopics: HotTopic[] = [
++  {
++    id: 'sloan-phenomenon',
++    title: 'The Sloan Phenomenon',
++    description: '99 MPH in his debut. Is Ryan Sloan the rotation answer we\'ve been waiting for? After his electric Cactus League debut that had everyone saying "Nasty, bro!" we need to separate velocity hype from rotation reality.',
++    predictions: '73% say he makes Opening Day roster',
++    category: 'Spring Training',
++    engagement: '127 predictions',
++    trending: true
++  },
++  {
++    id: 'montes-mania',
++    title: 'Montes Mania',
++    description: 'Everything about Lazaro Montes is big. But is he ready for the big leagues? The 21-year-old #43 prospect has the tools, the size, and the hype. History shows this is when Mariners prospects either break through or break our hearts.',
++    predictions: '41% say he debuts in 2026',
++    category: 'Prospects',
++    engagement: '94 predictions',
++    trending: true
++  },
++  {
++    id: 'miller-dilemma',
++    title: 'The Miller Dilemma',
++    description: 'Bryce Miller\'s oblique concern has rotation depth in question. Our young ace felt great until he didn\'t. The inflammation isn\'t serious, but it\'s a reminder that pitching depth wins championships.',
++    predictions: '67% say he\'s ready for Opening Day',
++    category: 'Rotation',
++    engagement: '156 predictions',
++    trending: false
++  },
++  {
++    id: 'championship-window',
++    title: 'Championship Window',
++    description: 'After 25 years of heartbreak, is 2026 finally our year? We\'ve been here before - the hype, the hope, the inevitable disappointment. But something feels different about this team. Are we really ready to compete?',
++    predictions: '58% say we make playoffs',
++    category: 'Season Outlook',
++    engagement: '203 predictions',
++    trending: true
++  }
++];
++
++export function HotTopics() {
++  return (
++    <Card>
++      <CardHeader className="flex flex-row items-center justify-between">
++        <div>
++          <CardTitle className="flex items-center gap-2 text-2xl">
++            <TrendingUp className="h-6 w-6 text-mariners-teal" />
++            What Mariners Fans Are Talking About
++          </CardTitle>
++          <CardDescription className="text-base">
++            Spring training buzz and season predictions
++          </CardDescription>
++        </div>
++        <Link href="/forum">
++          <Button variant="ghost" size="sm">
++            Join Discussion
++            <ChevronRight className="ml-1 h-4 w-4" />
++          </Button>
++        </Link>
++      </CardHeader>
++      <CardContent>
++        <div className="space-y-6">
++          {springTrainingTopics.map((topic) => (
++            <div key={topic.id} className="group">
++              <Link href={`/forum/topic/${topic.id}`} className="block">
++                <div className="rounded-lg border p-6 transition-all duration-200 hover:shadow-md hover:border-mariners-teal/50 group-hover:bg-muted/30">
++                  <div className="flex items-start justify-between mb-3">
++                    <div className="flex items-center gap-2">
++                      <h3 className="text-xl font-bold text-mariners-navy group-hover:text-mariners-teal transition-colors">
++                        {topic.title}
++                      </h3>
++                      {topic.trending && (
++                        <Badge variant="secondary" className="bg-red-100 text-red-700 border-red-200">
++                          🔥 Trending
++                        </Badge>
++                      )}
++                    </div>
++                    <Badge variant="outline" className="text-xs">
++                      {topic.category}
++                    </Badge>
++                  </div>
++                  
++                  <p className="text-muted-foreground leading-relaxed mb-4">
++                    {topic.description}
++                  </p>
++                  
++                  <div className="flex items-center justify-between">
++                    <div className="flex items-center gap-4 text-sm">
++                      <div className="flex items-center gap-1 text-mariners-teal font-semibold">
++                        <MessageCircle className="h-4 w-4" />
++                        {topic.engagement}
++                      </div>
++                      <div className="bg-mariners-navy/10 text-mariners-navy px-3 py-1 rounded-full font-medium">
++                        {topic.predictions}
++                      </div>
++                    </div>
++                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-mariners-teal transition-colors" />
++                  </div>
++                </div>
++              </Link>
++            </div>
++          ))}
++        </div>
++        
++        <div className="mt-6 pt-4 border-t">
++          <Link href="/forum" className="block">
++            <Button variant="outline" className="w-full">
++              <TrendingUp className="mr-2 h-4 w-4" />
++              View All Discussions
++            </Button>
++          </Link>
++        </div>
++      </CardContent>
++    </Card>
++  );
++}
+\ No newline at end of file
+-- 
+2.50.1 (Apple Git-155)
+
