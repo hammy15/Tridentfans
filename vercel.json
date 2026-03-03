@@ -53,6 +53,10 @@
     {
       "path": "/api/cron/manage-game-threads",
       "schedule": "0 */2 * * *"
+    },
+    {
+      "path": "/api/cron/mark-operations",
+      "schedule": "*/30 6-23 * * *"
     }
   ]
 }
