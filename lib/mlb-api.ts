@@ -1,513 +1,131 @@
-/**
- * MLB Stats API Integration
- * Free API, no authentication required
- * Docs: https://statsapi.mlb.com/docs/
- */
-
+// lib/mlb-api.ts
 const MLB_API_BASE = 'https://statsapi.mlb.com/api/v1';
-const MARINERS_TEAM_ID = 136; // Seattle Mariners
+const MARINERS_TEAM_ID = 136;
 
-// Cache implementation
-const cache = new Map<string, { data: unknown; expires: number }>();
-
-function getCached<T>(key: string): T | null {
-  const entry = cache.get(key);
-  if (entry && entry.expires > Date.now()) {
-    return entry.data as T;
-  }
-  cache.delete(key);
-  return null;
-}
-
-function setCache<T>(key: string, data: T, ttlMs: number): T {
-  cache.set(key, { data, expires: Date.now() + ttlMs });
-  return data;
-}
-
-// Cache TTLs
-const CACHE_TTL = {
-  LIVE: 30 * 1000, // 30 seconds
-  SCHEDULE: 60 * 60 * 1000, // 1 hour
-  ROSTER: 24 * 60 * 60 * 1000, // 24 hours
-  STANDINGS: 15 * 60 * 1000, // 15 minutes
-  HISTORICAL: 7 * 24 * 60 * 60 * 1000, // 7 days
-};
-
-// Types
-export interface MLBPlayer {
-  id: number;
-  fullName: string;
-  primaryNumber?: string;
-  primaryPosition: {
-    abbreviation: string;
-    name: string;
-  };
-  batSide: { code: string };
-  pitchHand: { code: string };
-}
-
-export interface MLBGameStatus {
-  abstractGameState: 'Live' | 'Final' | 'Preview';
-  detailedState: string;
-  statusCode: string;
-}
-
-export interface MLBGame {
+export interface Game {
   gamePk: number;
   gameDate: string;
-  status: MLBGameStatus;
+  status: {
+    statusCode: string;
+    detailedState: string;
+  };
   teams: {
     away: {
-      team: { id: number; name: string; abbreviation: string };
+      team: {
+        id: number;
+        name: string;
+        abbreviation: string;
+      };
       score?: number;
-      isWinner?: boolean;
     };
     home: {
-      team: { id: number; name: string; abbreviation: string };
+      team: {
+        id: number;
+        name: string;
+        abbreviation: string;
+      };
       score?: number;
-      isWinner?: boolean;
     };
   };
-  venue: { name: string };
+  venue: {
+    name: string;
+  };
+  gameType: string; // 'S' for Spring Training, 'R' for Regular Season
 }
 
-export interface MLBStanding {
+export interface Standing {
   team: {
     id: number;
     name: string;
   };
   wins: number;
   losses: number;
-  winningPercentage: string;
+  winPercentage: number;
   gamesBack: string;
-  streakCode: string;
-  records?: {
-    splitRecords: Array<{
-      type: string;
-      wins: number;
-      losses: number;
-    }>;
-  };
+  divisionRank: string;
 }
 
-async function fetchMLB<T>(endpoint: string): Promise<T> {
-  const response = await fetch(`${MLB_API_BASE}${endpoint}`);
-  if (!response.ok) {
-    throw new Error(`MLB API error: ${response.status} ${response.statusText}`);
-  }
-  return response.json();
-}
-
-/**
- * Get Mariners schedule for a season or date range
- */
-export async function getMarinersSchedule(
-  season?: number,
-  startDate?: string,
-  endDate?: string
-): Promise<MLBGame[]> {
-  const year = season || new Date().getFullYear();
-  const cacheKey = `schedule-${year}-${startDate}-${endDate}`;
-
-  const cached = getCached<MLBGame[]>(cacheKey);
-  if (cached) return cached;
-
-  let endpoint = `/schedule?sportId=1&teamId=${MARINERS_TEAM_ID}&season=${year}`;
-  if (startDate) endpoint += `&startDate=${startDate}`;
-  if (endDate) endpoint += `&endDate=${endDate}`;
-
-  const response = await fetchMLB<{ dates: Array<{ games: MLBGame[] }> }>(endpoint);
-
-  const games = response.dates.flatMap(d => d.games);
-  return setCache(cacheKey, games, CACHE_TTL.SCHEDULE);
-}
-
-/**
- * Get upcoming games (next N days)
- */
-export async function getUpcomingGames(days = 7): Promise<MLBGame[]> {
-  const today = new Date();
-  const endDate = new Date(today.getTime() + days * 24 * 60 * 60 * 1000);
-
-  const startStr = today.toISOString().split('T')[0];
-  const endStr = endDate.toISOString().split('T')[0];
-
-  return getMarinersSchedule(undefined, startStr, endStr);
-}
-
-/**
- * Get recent games (past N days)
- */
-export async function getRecentGames(days = 7): Promise<MLBGame[]> {
-  const today = new Date();
-  const startDate = new Date(today.getTime() - days * 24 * 60 * 60 * 1000);
-
-  const startStr = startDate.toISOString().split('T')[0];
-  const endStr = today.toISOString().split('T')[0];
-
-  return getMarinersSchedule(undefined, startStr, endStr);
-}
-
-/**
- * Get Mariners roster
- */
-export async function getMarinersRoster(): Promise<MLBPlayer[]> {
-  const cacheKey = 'roster';
-  const cached = getCached<MLBPlayer[]>(cacheKey);
-  if (cached) return cached;
-
-  const response = await fetchMLB<{
-    roster: Array<{
-      person: { id: number; fullName: string; link: string };
-      jerseyNumber?: string;
-      position: { abbreviation: string; name: string };
-      status?: { code: string };
-    }>;
-  }>(`/teams/${MARINERS_TEAM_ID}/roster?rosterType=40Man`);
-
-  const players: MLBPlayer[] = response.roster.map(r => ({
-    id: r.person.id,
-    fullName: r.person.fullName,
-    primaryNumber: r.jerseyNumber,
-    primaryPosition: {
-      abbreviation: r.position?.abbreviation || 'P',
-      name: r.position?.name || 'Player',
-    },
-    batSide: { code: 'R' },
-    pitchHand: { code: 'R' },
-  }));
-
-  return setCache(cacheKey, players, CACHE_TTL.ROSTER);
-}
-
-/**
- * Get 40-man roster
- */
-export async function getFullRoster(): Promise<MLBPlayer[]> {
-  const cacheKey = 'roster-40man';
-  const cached = getCached<MLBPlayer[]>(cacheKey);
-  if (cached) return cached;
-
-  const response = await fetchMLB<{ roster: Array<{ person: MLBPlayer }> }>(
-    `/teams/${MARINERS_TEAM_ID}/roster?rosterType=40Man`
-  );
-
-  const players = response.roster.map(r => r.person);
-  return setCache(cacheKey, players, CACHE_TTL.ROSTER);
-}
-
-/**
- * Get live game data
- */
-export async function getLiveGameData(gamePk: number) {
-  const cacheKey = `live-${gamePk}`;
-  const cached = getCached<unknown>(cacheKey);
-  if (cached) return cached;
-
-  const response = await fetchMLB<{
-    gameData: unknown;
-    liveData: unknown;
-  }>(`/game/${gamePk}/feed/live`);
-
-  return setCache(cacheKey, response, CACHE_TTL.LIVE);
-}
-
-/**
- * Get player stats
- */
-export async function getPlayerStats(
-  playerId: number,
-  season?: number,
-  group: 'hitting' | 'pitching' | 'fielding' = 'hitting'
-) {
-  const year = season || new Date().getFullYear();
-  const cacheKey = `player-${playerId}-${year}-${group}`;
-
-  const cached = getCached<unknown>(cacheKey);
-  if (cached) return cached;
-
-  const response = await fetchMLB<{ stats: unknown[] }>(
-    `/people/${playerId}/stats?stats=season&season=${year}&group=${group}`
-  );
-
-  return setCache(cacheKey, response.stats, CACHE_TTL.ROSTER);
-}
-
-/**
- * Get AL West standings
- */
-export async function getALWestStandings(): Promise<MLBStanding[]> {
-  const cacheKey = 'standings-alwest';
-  const cached = getCached<MLBStanding[]>(cacheKey);
-  if (cached) return cached;
-
-  const response = await fetchMLB<{
-    records: Array<{
-      division: { id: number };
-      teamRecords: MLBStanding[];
-    }>;
-  }>(`/standings?leagueId=103`); // 103 = American League
-
-  // AL West division ID is 200
-  const alWest = response.records.find(r => r.division.id === 200);
-  const standings = alWest?.teamRecords || [];
-
-  return setCache(cacheKey, standings, CACHE_TTL.STANDINGS);
-}
-
-/**
- * Get team stats
- */
-export async function getTeamStats(season?: number) {
-  const year = season || new Date().getFullYear();
-  const cacheKey = `team-stats-${year}`;
-
-  const cached = getCached<unknown>(cacheKey);
-  if (cached) return cached;
-
-  const response = await fetchMLB<{ stats: unknown[] }>(
-    `/teams/${MARINERS_TEAM_ID}/stats?stats=season&season=${year}&group=hitting,pitching`
-  );
-
-  return setCache(cacheKey, response.stats, CACHE_TTL.SCHEDULE);
-}
-
-/**
- * Get today's game (if any)
- */
-export async function getTodaysGame(): Promise<MLBGame | null> {
-  const today = new Date().toISOString().split('T')[0];
-  const games = await getMarinersSchedule(undefined, today, today);
-  return games[0] || null;
-}
-
-/**
- * Check if there's a live Mariners game
- */
-export async function getLiveGame(): Promise<MLBGame | null> {
-  const todaysGame = await getTodaysGame();
-  if (todaysGame && todaysGame.status.abstractGameState === 'Live') {
-    return todaysGame;
-  }
-  return null;
-}
-
-/**
- * Format game for display
- */
-export function formatGameForDisplay(game: MLBGame) {
-  const isHome = game.teams.home.team.id === MARINERS_TEAM_ID;
-  const opponent = isHome ? game.teams.away.team : game.teams.home.team;
-  const marinersTeam = isHome ? game.teams.home : game.teams.away;
-  const opponentTeam = isHome ? game.teams.away : game.teams.home;
-
-  return {
-    gamePk: game.gamePk,
-    date: new Date(game.gameDate),
-    opponent: opponent.name,
-    opponentAbbr: opponent.abbreviation,
-    isHome,
-    venue: game.venue.name,
-    status: game.status.abstractGameState,
-    statusDetail: game.status.detailedState,
-    marinersScore: marinersTeam.score,
-    opponentScore: opponentTeam.score,
-    isWin: marinersTeam.isWinner,
-  };
-}
-
-/**
- * Live game details interface
- */
-export interface LiveGameDetails {
-  inning: number;
-  inningHalf: 'Top' | 'Bottom';
-  outs: number;
-  balls: number;
-  strikes: number;
-  onFirst: boolean;
-  onSecond: boolean;
-  onThird: boolean;
-  currentBatter?: {
-    name: string;
-    avg: string;
-  };
-  currentPitcher?: {
-    name: string;
-    era: string;
-  };
-  lastPlay?: string;
-  marinersHits: number;
-  opponentHits: number;
-  marinersErrors: number;
-  opponentErrors: number;
-}
-
-/**
- * Get Mariners recent transactions (trades, signings, DFA, etc.)
- */
-export async function getMarinersTransactions(days = 30) {
-  const cacheKey = `transactions-${days}`;
-  const cached = getCached<unknown[]>(cacheKey);
-  if (cached) return cached;
-
-  const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .split('T')[0];
-  const endDate = new Date().toISOString().split('T')[0];
-
+// Get Mariners schedule with spring training support
+export async function getMarinersSchedule(days = 7): Promise<Game[]> {
   try {
-    const response = await fetchMLB<{
-      transactions: Array<{
-        id: number;
-        date: string;
-        typeCode: string;
-        typeDesc: string;
-        description: string;
-        player?: { fullName: string };
-      }>;
-    }>(
-      `/transactions?teamId=${MARINERS_TEAM_ID}&startDate=${startDate}&endDate=${endDate}`
+    const startDate = new Date().toISOString().split('T')[0];
+    const endDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000)
+      .toISOString().split('T')[0];
+    
+    const response = await fetch(
+      `${MLB_API_BASE}/schedule?sportId=1&teamId=${MARINERS_TEAM_ID}&startDate=${startDate}&endDate=${endDate}&hydrate=team,linescore,venue`
     );
-    return setCache(cacheKey, response.transactions || [], CACHE_TTL.SCHEDULE);
-  } catch {
+    
+    const data = await response.json();
+    const games: Game[] = [];
+    
+    data.dates?.forEach((date: any) => {
+      date.games?.forEach((game: any) => {
+        games.push({
+          gamePk: game.gamePk,
+          gameDate: game.gameDate,
+          status: game.status,
+          teams: game.teams,
+          venue: game.venue,
+          gameType: game.gameType
+        });
+      });
+    });
+    
+    return games;
+  } catch (error) {
+    console.error('Failed to fetch Mariners schedule:', error);
     return [];
   }
 }
 
-/**
- * Get league leaders for Mariners players
- */
-export async function getMarinersStatLeaders(season?: number) {
-  const year = season || new Date().getFullYear();
-  const cacheKey = `leaders-${year}`;
-  const cached = getCached<unknown>(cacheKey);
-  if (cached) return cached;
-
+// Get live scores for today's games
+export async function getTodaysGames(): Promise<Game[]> {
   try {
-    const [hitting, pitching] = await Promise.all([
-      fetchMLB<{ stats: unknown[] }>(
-        `/teams/${MARINERS_TEAM_ID}/stats?stats=season&season=${year}&group=hitting&sortStat=onBasePlusSlugging&order=desc`
-      ),
-      fetchMLB<{ stats: unknown[] }>(
-        `/teams/${MARINERS_TEAM_ID}/stats?stats=season&season=${year}&group=pitching&sortStat=earnedRunAverage&order=asc`
-      ),
-    ]);
-    const result = { hitting: hitting.stats, pitching: pitching.stats };
-    return setCache(cacheKey, result, CACHE_TTL.STANDINGS);
-  } catch {
-    return { hitting: [], pitching: [] };
-  }
-}
-
-/**
- * Get team record summary (for quick display)
- */
-export async function getMarinersRecordSummary() {
-  const cacheKey = 'record-summary';
-  const cached = getCached<unknown>(cacheKey);
-  if (cached) return cached;
-
-  try {
-    const standings = await getALWestStandings();
-    const mariners = standings.find((t) => t.team.id === MARINERS_TEAM_ID);
-    if (!mariners) return null;
-
-    const result = {
-      wins: mariners.wins,
-      losses: mariners.losses,
-      pct: mariners.winningPercentage,
-      gamesBack: mariners.gamesBack,
-      streak: mariners.streakCode,
-    };
-    return setCache(cacheKey, result, CACHE_TTL.STANDINGS);
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Get detailed live game data
- */
-export async function getDetailedLiveGame(gamePk: number): Promise<LiveGameDetails | null> {
-  try {
-    const response = await fetchMLB<{
-      liveData: {
-        linescore: {
-          currentInning: number;
-          currentInningOrdinal: string;
-          inningHalf: string;
-          outs: number;
-          balls: number;
-          strikes: number;
-          offense: {
-            first?: { fullName: string };
-            second?: { fullName: string };
-            third?: { fullName: string };
-            batter?: { fullName: string };
-          };
-          defense: {
-            pitcher?: { fullName: string };
-          };
-          teams: {
-            home: { runs: number; hits: number; errors: number };
-            away: { runs: number; hits: number; errors: number };
-          };
-        };
-        plays: {
-          currentPlay?: {
-            result?: { description: string };
-          };
-          allPlays?: Array<{ result?: { description: string } }>;
-        };
-      };
-      gameData: {
-        teams: {
-          home: { id: number };
-        };
-        players: Record<string, { stats?: { batting?: { avg: string }; pitching?: { era: string } } }>;
-      };
-    }>(`/game/${gamePk}/feed/live`);
-
-    const linescore = response.liveData.linescore;
-    const plays = response.liveData.plays;
-    const isMarinersHome = response.gameData.teams.home.id === MARINERS_TEAM_ID;
-
-    const marinersStats = isMarinersHome ? linescore.teams.home : linescore.teams.away;
-    const opponentStats = isMarinersHome ? linescore.teams.away : linescore.teams.home;
-
-    // Get last play description
-    let lastPlay: string | undefined;
-    if (plays.currentPlay?.result?.description) {
-      lastPlay = plays.currentPlay.result.description;
-    } else if (plays.allPlays && plays.allPlays.length > 0) {
-      const last = plays.allPlays[plays.allPlays.length - 1];
-      lastPlay = last?.result?.description;
-    }
-
-    return {
-      inning: linescore.currentInning,
-      inningHalf: linescore.inningHalf === 'Top' ? 'Top' : 'Bottom',
-      outs: linescore.outs || 0,
-      balls: linescore.balls || 0,
-      strikes: linescore.strikes || 0,
-      onFirst: !!linescore.offense?.first,
-      onSecond: !!linescore.offense?.second,
-      onThird: !!linescore.offense?.third,
-      currentBatter: linescore.offense?.batter
-        ? { name: linescore.offense.batter.fullName, avg: '.---' }
-        : undefined,
-      currentPitcher: linescore.defense?.pitcher
-        ? { name: linescore.defense.pitcher.fullName, era: '-.--' }
-        : undefined,
-      lastPlay,
-      marinersHits: marinersStats.hits,
-      opponentHits: opponentStats.hits,
-      marinersErrors: marinersStats.errors,
-      opponentErrors: opponentStats.errors,
-    };
+    const today = new Date().toISOString().split('T')[0];
+    const response = await fetch(
+      `${MLB_API_BASE}/schedule?sportId=1&teamId=${MARINERS_TEAM_ID}&date=${today}&hydrate=team,linescore,venue`
+    );
+    
+    const data = await response.json();
+    return data.dates?.[0]?.games || [];
   } catch (error) {
-    console.error('Failed to get detailed live game:', error);
-    return null;
+    console.error('Failed to fetch today\'s games:', error);
+    return [];
   }
+}
+
+// Get AL West standings
+export async function getALWestStandings(): Promise<Standing[]> {
+  try {
+    const response = await fetch(
+      `${MLB_API_BASE}/standings?leagueId=103&season=2026&standingsTypes=divisionLeaders,wildCard`
+    );
+    
+    const data = await response.json();
+    const alWestDivision = data.records?.find((division: any) => 
+      division.division?.id === 200 // AL West division ID
+    );
+    
+    return alWestDivision?.teamRecords || [];
+  } catch (error) {
+    console.error('Failed to fetch AL West standings:', error);
+    return [];
+  }
+}
+
+// Team logos mapping
+export const TEAM_LOGOS = {
+  136: '/team-logos/mariners.svg', // Mariners
+  108: '/team-logos/angels.svg',   // Angels
+  117: '/team-logos/astros.svg',   // Astros
+  140: '/team-logos/rangers.svg',  // Rangers
+  133: '/team-logos/athletics.svg', // Athletics
+  // Add more teams as needed
+};
+
+// Get team logo URL
+export function getTeamLogo(teamId: number): string {
+  return TEAM_LOGOS[teamId as keyof typeof TEAM_LOGOS] || 
+         `https://www.mlbstatic.com/team-logos/team-cap-on-light/${teamId}.svg`;
 }
