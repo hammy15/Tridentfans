@@ -24,6 +24,7 @@ import {
 import { DEFAULT_BOT_CONFIGS, BOT_PRESETS } from '@/lib/ai-bots';
 import type { BotId, BotTraits } from '@/types';
 import { PredictionManager } from '@/components/admin/PredictionManager';
+import { PredictionManager2 } from '@/components/admin/PredictionManager2.0';
 import { ForumModeration } from '@/components/admin/ForumModeration';
 import { AnalyticsDashboard } from '@/components/admin/AnalyticsDashboard';
 import { GameThreadManager } from '@/components/admin/GameThreadManager';
@@ -642,7 +643,15 @@ export default function AdminPage() {
         return <BotsSection adminPassword={adminPassword} />;
 
       case 'predictions':
-        return <PredictionManager adminPassword={adminPassword} />;
+        return (
+          <div className="space-y-6">
+            <PredictionManager2 adminPassword={adminPassword} />
+            <div className="pt-8 border-t">
+              <h2 className="text-xl font-semibold mb-4">Legacy Prediction System</h2>
+              <PredictionManager adminPassword={adminPassword} />
+            </div>
+          </div>
+        );
 
       case 'forum':
         return (
