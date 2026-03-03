@@ -29,6 +29,10 @@
     {
       "path": "/api/cron/mark-blog",
       "schedule": "0 17 * * 1,4"
+    },
+    {
+      "path": "/api/cron/mark-strategy",
+      "schedule": "0 14 * * 1,4"
     }
   ]
 }
