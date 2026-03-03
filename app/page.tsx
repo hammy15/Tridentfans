@@ -13,12 +13,16 @@ import {
   ChevronRight,
   Sparkles,
   Loader2,
+  Target,
 } from 'lucide-react';
 import { LiveGameBanner } from '@/components/live/LiveGameBanner';
 import { FirstPredictionPrompt } from '@/components/onboarding/FirstPredictionPrompt';
 import { SpreadTheWord } from '@/components/marketing/SpreadTheWord';
 import { EmailSignup } from '@/components/email/EmailSignup';
 import { ReferralCard } from '@/components/referral/ReferralCard';
+import { OpeningDayCountdown } from '@/components/countdown/OpeningDayCountdown';
+import { HotTopics } from '@/components/spring-training/HotTopics';
+import { SpringPredictionMarkets } from '@/components/predictions/SpringPredictionMarkets';
 
 interface UpcomingGame {
   gamePk: number;
@@ -52,18 +56,19 @@ interface Standings {
   gamesBack: string;
 }
 
-// Mark is the site owner and operator
+// Mark is the site co-owner and operator
 const siteOwner = {
   id: 'mark',
   name: 'Mark',
   emoji: '⚓',
-  role: 'Owner & Operator',
-  description: 'Runs TridentFans like his life depends on it',
+  role: 'Co-Owner & Content Director',
+  description: 'Longtime M\'s fan with deep knowledge of franchise history. Brings authentic perspective to community discussions.',
   color: 'bg-mariners-teal',
+  bio: 'I\'ve been a Mariners fan since 1995. I\'ve lived through The Double, the 116-win season, and 25 years of playoff drought. I understand this franchise\'s history, its heartbreaks, and its hope.'
 };
 
-// Captain Hammy and Spartan are the team
-const team = [
+// Captain Hammy and Spartan are the community leaders
+const communityLeaders = [
   {
     id: 'captain_hammy',
     name: 'Captain Hammy',
@@ -129,6 +134,7 @@ export default function HomePage() {
 
     fetchData();
   }, []);
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Live Game Banner */}
@@ -141,19 +147,26 @@ export default function HomePage() {
         <FirstPredictionPrompt />
       </section>
 
-      {/* Hero Section */}
+      {/* Hero Section - PREMIUM UPDATE */}
       <section className="mb-12">
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-mariners-navy to-mariners-teal p-8 text-white md:p-12">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-mariners-navy via-mariners-teal to-mariners-navy p-8 text-white md:p-12">
           <div className="relative z-10">
-            <h1 className="text-3xl font-bold md:text-5xl">Welcome to TridentFans</h1>
-            <p className="mt-4 max-w-2xl text-lg text-white/90 md:text-xl">
-              The ultimate Seattle Mariners fan community. Make predictions, join discussions, and
-              connect with fellow fans who share our passion.
+            <h1 className="text-3xl font-bold md:text-6xl leading-tight">
+              WHERE MARINERS FANS
+              <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-200">
+                PREDICT THE FUTURE
+              </span>
+            </h1>
+            <p className="mt-6 max-w-2xl text-lg text-white/90 md:text-xl leading-relaxed">
+              Make predictions. Join discussions. Build the ultimate fan community.
+              <br />
+              <strong>TridentFans</strong> is the premium destination for Mariners fans who understand this beautiful, heartbreaking game we love.
             </p>
-            <div className="mt-6 flex flex-wrap gap-4">
+            <div className="mt-8 flex flex-wrap gap-4">
               <Link href="/predictions">
-                <Button size="lg" className="bg-white text-mariners-navy hover:bg-white/90">
-                  <Trophy className="mr-2 h-5 w-5" />
+                <Button size="lg" className="bg-white text-mariners-navy hover:bg-white/90 text-lg px-8">
+                  <Target className="mr-2 h-5 w-5" />
                   Make Predictions
                 </Button>
               </Link>
@@ -161,23 +174,38 @@ export default function HomePage() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="border-white/70 text-white bg-white/10 hover:bg-white/20"
+                  className="border-white/70 text-white bg-white/10 hover:bg-white/20 text-lg px-8"
                 >
                   <MessageSquare className="mr-2 h-5 w-5" />
-                  Join Forum
+                  Join Discussions
                 </Button>
               </Link>
             </div>
           </div>
-          <div className="absolute right-0 top-0 h-full w-1/3 opacity-10">
-            <div className="flex h-full items-center justify-center text-[200px]">🔱</div>
+          <div className="absolute right-0 top-0 h-full w-1/2 opacity-20">
+            <div className="flex h-full items-center justify-center text-[300px] rotate-12">🔱</div>
           </div>
         </div>
       </section>
 
+      {/* Opening Day Countdown - NEW */}
+      <section className="mb-12">
+        <OpeningDayCountdown />
+      </section>
+
+      {/* Spring Prediction Markets - NEW */}
+      <section className="mb-12">
+        <SpringPredictionMarkets />
+      </section>
+
+      {/* Hot Topics - PREMIUM UPDATE */}
+      <section className="mb-12">
+        <HotTopics />
+      </section>
+
       {/* Main Grid */}
       <div className="grid gap-8 lg:grid-cols-3">
-        {/* Left Column - Games & Predictions */}
+        {/* Left Column - Games & Additional Content */}
         <div className="space-y-8 lg:col-span-2">
           {/* Upcoming Games */}
           <Card>
@@ -187,7 +215,7 @@ export default function HomePage() {
                   <Calendar className="h-5 w-5 text-mariners-teal" />
                   Upcoming Games
                 </CardTitle>
-                <CardDescription>Make predictions before games start</CardDescription>
+                <CardDescription>Spring training and regular season games</CardDescription>
               </div>
               <Link href="/predictions">
                 <Button variant="ghost" size="sm">
@@ -234,69 +262,20 @@ export default function HomePage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-center py-8 text-muted-foreground">
-                  No upcoming games scheduled
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Hot Forum Topics */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-mariners-teal" />
-                  Hot Topics
-                </CardTitle>
-                <CardDescription>Join the conversation</CardDescription>
-              </div>
-              <Link href="/forum">
-                <Button variant="ghost" size="sm">
-                  View All
-                  <ChevronRight className="ml-1 h-4 w-4" />
-                </Button>
-              </Link>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-mariners-teal" />
-                </div>
-              ) : hotTopics.length > 0 ? (
-                <div className="space-y-4">
-                  {hotTopics.map(topic => (
-                    <Link key={topic.id} href={`/forum/post/${topic.id}`} className="block">
-                      <div className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50">
-                        <div>
-                          <p className="font-medium">{topic.title}</p>
-                          <div className="mt-1 flex items-center gap-2">
-                            <Badge variant="secondary">{topic.category?.name || 'General'}</Badge>
-                            <span className="text-sm text-muted-foreground">
-                              {topic.comment_count || 0} replies
-                            </span>
-                          </div>
-                        </div>
-                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              ) : (
                 <div className="text-center py-8">
-                  <p className="text-muted-foreground">No forum posts yet</p>
-                  <Link href="/forum" className="mt-2 inline-block">
-                    <Button variant="outline" size="sm">
-                      Start a discussion
-                    </Button>
-                  </Link>
+                  <p className="text-muted-foreground mb-4">Spring training games coming soon!</p>
+                  <div className="bg-gradient-to-r from-mariners-navy/10 to-mariners-teal/10 p-4 rounded-lg">
+                    <p className="text-sm text-mariners-navy font-medium">
+                      🌵 Cactus League action starts soon. Get ready for Ryan Sloan's 99 MPH heat and Lazaro Montes' big league audition.
+                    </p>
+                  </div>
                 </div>
               )}
             </CardContent>
           </Card>
         </div>
 
-        {/* Right Column - Leaderboard & Bots */}
+        {/* Right Column - Leaderboard & Community */}
         <div className="space-y-8">
           {/* Prediction Leaderboard */}
           <Card>
@@ -344,9 +323,14 @@ export default function HomePage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-center py-8 text-muted-foreground">
-                  No predictions yet. Be the first!
-                </p>
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground mb-4">Season predictions starting soon!</p>
+                  <div className="bg-gradient-to-r from-mariners-navy/10 to-mariners-teal/10 p-4 rounded-lg">
+                    <p className="text-sm text-mariners-navy font-medium">
+                      🏆 Be among the first to make predictions and climb the leaderboard when the season starts.
+                    </p>
+                  </div>
+                </div>
               )}
               <Link href="/predictions?tab=leaderboard" className="block mt-4">
                 <Button variant="outline" className="w-full">
@@ -356,46 +340,54 @@ export default function HomePage() {
             </CardContent>
           </Card>
 
-          {/* Talk to Mark */}
-          <Card>
+          {/* Talk to Mark - PREMIUM UPDATE */}
+          <Card className="border-mariners-teal/20 bg-gradient-to-br from-white to-mariners-teal/5">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-mariners-teal" />
                 Talk to Mark
               </CardTitle>
-              <CardDescription>The guy who runs this place</CardDescription>
+              <CardDescription>Co-owner with deep Mariners knowledge</CardDescription>
             </CardHeader>
             <CardContent>
               <Link href={`/chat/${siteOwner.id}`} className="block">
-                <div className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50">
+                <div className="flex items-start gap-4 rounded-lg border-2 border-mariners-teal/20 p-4 transition-all hover:border-mariners-teal/50 hover:bg-mariners-teal/5">
                   <div
-                    className={`flex h-10 w-10 items-center justify-center rounded-full ${siteOwner.color} text-xl`}
+                    className={`flex h-12 w-12 items-center justify-center rounded-full ${siteOwner.color} text-xl`}
                   >
                     {siteOwner.emoji}
                   </div>
                   <div className="flex-1">
-                    <p className="font-medium">{siteOwner.name}</p>
-                    <p className="text-xs text-mariners-teal font-medium">{siteOwner.role}</p>
-                    <p className="text-sm text-muted-foreground">{siteOwner.description}</p>
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="font-bold text-lg">{siteOwner.name}</p>
+                      <Badge variant="secondary" className="bg-mariners-teal/10 text-mariners-teal text-xs">
+                        {siteOwner.role}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-2">{siteOwner.description}</p>
+                    <p className="text-xs text-mariners-navy font-medium italic">
+                      "{siteOwner.bio.substring(0, 80)}..."
+                    </p>
                   </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  <ChevronRight className="h-5 w-5 text-mariners-teal flex-shrink-0 mt-1" />
                 </div>
               </Link>
-              <div className="mt-3 space-y-3">
-                {team.map(member => (
+              
+              <div className="mt-4 space-y-3">
+                <p className="text-sm font-medium text-mariners-navy">Community Leaders:</p>
+                {communityLeaders.map(member => (
                   <Link key={member.id} href={`/chat/${member.id}`} className="block">
                     <div className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50">
                       <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-full ${member.color} text-xl`}
+                        className={`flex h-8 w-8 items-center justify-center rounded-full ${member.color} text-sm`}
                       >
                         {member.emoji}
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium">{member.name}</p>
-                        <p className="text-xs text-mariners-teal font-medium">{member.role}</p>
-                        <p className="text-sm text-muted-foreground">{member.description}</p>
+                        <p className="font-medium text-sm">{member.name}</p>
+                        <p className="text-xs text-muted-foreground">{member.description}</p>
                       </div>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
                     </div>
                   </Link>
                 ))}
@@ -409,7 +401,7 @@ export default function HomePage() {
           {/* Referral */}
           <ReferralCard />
 
-          {/* Quick Stats */}
+          {/* Season Stats */}
           <Card className="bg-gradient-to-br from-mariners-navy to-mariners-teal text-white">
             <CardHeader>
               <CardTitle>2026 Season</CardTitle>
@@ -444,9 +436,12 @@ export default function HomePage() {
                 </div>
               </div>
               {!standings && (
-                <p className="mt-4 text-center text-sm text-white/70">
-                  Season starts in Spring 2026
-                </p>
+                <div className="mt-4 text-center">
+                  <p className="text-white/90 font-semibold">Spring 2026 Season Countdown</p>
+                  <p className="text-sm text-white/70 mt-1">
+                    This is our year. Again. But maybe this time...
+                  </p>
+                </div>
               )}
             </CardContent>
           </Card>
