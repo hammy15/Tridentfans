@@ -19,6 +19,7 @@ import {
   X,
   ChevronLeft,
   Shield,
+  ExternalLink,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -30,6 +31,7 @@ export type AdminSection =
   | 'polls'
   | 'history'
   | 'prospects'
+  | 'reddit'
   | 'email'
   | 'notifications'
   | 'players'
@@ -50,6 +52,7 @@ const navItems: NavItem[] = [
   { id: 'polls', label: 'Polls', icon: BarChart2, description: 'Community polls' },
   { id: 'history', label: 'History', icon: History, description: 'Mariners history data' },
   { id: 'prospects', label: 'Prospects', icon: Users, description: 'Prospect tracker' },
+  { id: 'reddit', label: 'Reddit', icon: ExternalLink, description: 'Reddit engagement tracking' },
   { id: 'email', label: 'Email', icon: Mail, description: 'Email templates & campaigns' },
   { id: 'notifications', label: 'Notifications', icon: Bell, description: 'Push & in-app alerts' },
   { id: 'players', label: 'Players', icon: UserCircle, description: 'Player comparison tool' },

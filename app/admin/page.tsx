@@ -32,6 +32,7 @@ import { PlayerCompareAdmin } from '@/components/admin/PlayerCompareAdmin';
 import { ProspectsAdmin } from '@/components/admin/ProspectsAdmin';
 import { PollsAdmin } from '@/components/admin/PollsAdmin';
 import { NotificationAdmin } from '@/components/admin/NotificationAdmin';
+import { RedditEngagement } from '@/components/admin/RedditEngagement';
 import { AdminLayout, AdminPlaceholder, type AdminSection } from '@/components/admin/AdminLayout';
 import { AdminSettings } from '@/components/admin/AdminSettings';
 
@@ -659,6 +660,9 @@ export default function AdminPage() {
 
       case 'prospects':
         return <ProspectsAdmin adminPassword={adminPassword} />;
+
+      case 'reddit':
+        return <RedditEngagement adminPassword={adminPassword} />;
 
       case 'email':
         return (

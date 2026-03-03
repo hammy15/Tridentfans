@@ -41,6 +41,10 @@
     {
       "path": "/api/cron/mark-social",
       "schedule": "0 18 * * *"
+    },
+    {
+      "path": "/api/cron/reddit-monitor",
+      "schedule": "*/30 8-22 * * *"
     }
   ]
 }
