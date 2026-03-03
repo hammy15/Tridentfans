@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { createClient } from '@supabase/supabase-js';
 import { MARK_SYSTEM_PROMPT, MARK_CONTENT_VOICE } from '@/lib/mark-soul';
+import { sendBroadcastNotification } from '@/lib/push-notifications';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -92,7 +93,19 @@ export async function GET(request: NextRequest) {
         is_mark_content: true,
       });
 
-      if (!error) created++;
+      if (!error) {
+        created++;
+        try {
+          await sendBroadcastNotification({
+            title: 'Post-Game Recap',
+            body: parsed.title,
+            icon: '/icons/icon-192x192.png',
+            data: { url: '/forum' },
+          });
+        } catch {
+          // Best effort
+        }
+      }
     }
 
     return NextResponse.json({ success: true, created });

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { createClient } from '@supabase/supabase-js';
 import { MARK_SYSTEM_PROMPT, MARK_CONTENT_VOICE } from '@/lib/mark-soul';
+import { sendBroadcastNotification } from '@/lib/push-notifications';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -135,14 +136,32 @@ Do NOT include markdown code fences. Just the raw JSON.`,
     if (!category) return false;
 
     // Create the post
-    const { error } = await supabase.from('forum_posts').insert({
-      category_id: category.id,
-      user_id: null, // System post (Mark)
-      title: parsed.title,
-      content: parsed.content + '\n\n— Mark',
-      is_pinned: false,
-      is_mark_content: true,
-    });
+    const { data: newPost, error } = await supabase
+      .from('forum_posts')
+      .insert({
+        category_id: category.id,
+        user_id: null, // System post (Mark)
+        title: parsed.title,
+        content: parsed.content + '\n\n— Mark',
+        is_pinned: false,
+        is_mark_content: true,
+      })
+      .select('id')
+      .single();
+
+    // Send push notification to all subscribers
+    if (newPost) {
+      try {
+        await sendBroadcastNotification({
+          title: 'New from Mark',
+          body: parsed.title,
+          icon: '/icons/icon-192x192.png',
+          data: { url: `/forum/post/${newPost.id}` },
+        });
+      } catch {
+        // Push is best-effort, don't fail the cron
+      }
+    }
 
     return !error;
   } catch (error) {

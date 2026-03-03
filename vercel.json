@@ -33,6 +33,14 @@
     {
       "path": "/api/cron/mark-strategy",
       "schedule": "0 14 * * 1,4"
+    },
+    {
+      "path": "/api/cron/weekly-digest",
+      "schedule": "0 16 * * 0"
+    },
+    {
+      "path": "/api/cron/mark-social",
+      "schedule": "0 18 * * *"
     }
   ]
 }

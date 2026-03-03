@@ -20,6 +20,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import type { PredictionGame, LeaderboardEntry } from '@/types';
 import { BotVsHumanLeaderboard } from '@/components/predictions/BotVsHumanLeaderboard';
+import { ShareButton } from '@/components/common/ShareButton';
+import { getPredictionShareData } from '@/lib/share';
 
 interface PredictionOption {
   id: string;
@@ -421,7 +423,16 @@ export default function PredictionsPage() {
                   <br />
                   Results will be scored after the game ends.
                 </p>
-                <div className="flex gap-3 justify-center">
+                <div className="flex gap-3 justify-center flex-wrap">
+                  <ShareButton
+                    data={getPredictionShareData({
+                      winner: predictions['winner'] || 'mariners',
+                      marinersRuns: parseInt(predictions['mariners_runs'] || '0'),
+                      opponentRuns: parseInt(predictions['opponent_runs'] || '0'),
+                      opponent: selectedGame.opponent,
+                      gameDate: selectedGame.game_date,
+                    })}
+                  />
                   <Button
                     variant="outline"
                     onClick={() => {

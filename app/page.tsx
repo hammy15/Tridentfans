@@ -17,6 +17,8 @@ import {
 import { LiveGameBanner } from '@/components/live/LiveGameBanner';
 import { FirstPredictionPrompt } from '@/components/onboarding/FirstPredictionPrompt';
 import { SpreadTheWord } from '@/components/marketing/SpreadTheWord';
+import { EmailSignup } from '@/components/email/EmailSignup';
+import { ReferralCard } from '@/components/referral/ReferralCard';
 
 interface UpcomingGame {
   gamePk: number;
@@ -400,6 +402,12 @@ export default function HomePage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Email Signup */}
+          <EmailSignup />
+
+          {/* Referral */}
+          <ReferralCard />
 
           {/* Quick Stats */}
           <Card className="bg-gradient-to-br from-mariners-navy to-mariners-teal text-white">

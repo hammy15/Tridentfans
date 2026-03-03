@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getUpcomingGames, formatGameForDisplay } from '@/lib/mlb-api';
+import { sendBroadcastNotification } from '@/lib/push-notifications';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -99,7 +100,20 @@ Share your predictions, lineup thoughts, and get hyped for the game!
         mlb_game_id: game.gamePk,
       });
 
-      if (!error) created++;
+      if (!error) {
+        created++;
+        // Notify subscribers about game day
+        try {
+          await sendBroadcastNotification({
+            title: `Game Day: ${title}`,
+            body: 'Game thread is live. Make your predictions!',
+            icon: '/icons/icon-192x192.png',
+            data: { url: '/predictions' },
+          });
+        } catch {
+          // Best effort
+        }
+      }
     }
 
     return NextResponse.json({

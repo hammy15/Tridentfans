@@ -11,6 +11,7 @@ import { MessageSquare, ThumbsUp, Clock, ArrowLeft, Loader2, LogIn, Send } from 
 import { useAuth } from '@/contexts/AuthContext';
 import { ShareButton } from '@/components/common/ShareButton';
 import { getForumPostShareData } from '@/lib/share';
+import { LiveGameChat } from '@/components/chat/LiveGameChat';
 import type { ForumPost, ForumComment } from '@/types';
 
 interface PostWithComments extends ForumPost {
@@ -177,6 +178,15 @@ export default function PostPage({ params }: { params: Promise<{ postId: string 
           </div>
         </CardContent>
       </Card>
+
+      {/* Live Game Chat — shows on game thread posts */}
+      {post.is_game_thread && post.mlb_game_id && (
+        <Card className="mb-8">
+          <CardContent className="p-0">
+            <LiveGameChat gameId={String(post.mlb_game_id)} />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Comments Section */}
       <Card>

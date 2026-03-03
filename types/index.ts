@@ -81,6 +81,10 @@ export interface ForumPost {
   content: string;
   upvotes: number;
   created_at: string;
+  is_pinned?: boolean;
+  is_game_thread?: boolean;
+  is_mark_content?: boolean;
+  mlb_game_id?: number;
   // Joined fields
   author?: Profile;
   category?: ForumCategory;

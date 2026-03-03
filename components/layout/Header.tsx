@@ -20,6 +20,8 @@ import {
   Swords,
   Medal,
   Award,
+  BookOpen,
+  Info,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
@@ -45,7 +47,9 @@ const navigation = [
   { name: 'Forum', href: '/forum', icon: MessageSquare },
   { name: 'News', href: '/news', icon: Newspaper },
   { name: 'Roster', href: '/roster', icon: Users },
+  { name: 'Blog', href: '/blog', icon: BookOpen },
   { name: 'Donate', href: '/donate', icon: Heart },
+  { name: 'About', href: '/about', icon: Info },
 ];
 
 export function Header() {
