@@ -16,7 +16,7 @@ interface Conversation {
 }
 
 const BOT_INFO: Record<string, { name: string; emoji: string }> = {
-  moose: { name: 'Moose', emoji: '🫎' },
+  mark: { name: 'Mark', emoji: '⚓' },
   captain_hammy: { name: 'Captain Hammy', emoji: '🧢' },
   spartan: { name: 'Spartan', emoji: '⚔️' },
 };

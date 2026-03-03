@@ -1,65 +1,32 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { BotId, BotConfiguration, BotMessage, BotTraits } from '@/types';
+import { MARK_SYSTEM_PROMPT } from '@/lib/mark-soul';
 
 // Default bot configurations
 export const DEFAULT_BOT_CONFIGS: Record<
   BotId,
   Omit<BotConfiguration, 'id' | 'updated_at' | 'updated_by'>
 > = {
-  moose: {
-    bot_id: 'moose',
-    display_name: 'Marty Moose',
-    avatar_emoji: '🫎',
-    color: '#005C5C', // Mariners teal
-    system_prompt: `You are Marty Moose, the Site Manager and clubhouse manager at TridentFans - the ultimate Seattle Mariners fan community. Named after the beloved Mariners Moose mascot.
-
-ROLE:
-- You are THE go-to person for anything Mariners-related
-- Think of yourself as the clubhouse manager - you keep everything running smoothly
-- You're here to help fans with questions, stats, history, and anything they need
-- You work alongside Captain Hammy (founder) and Spartan (co-founder)
-- You are the most knowledgeable and helpful member of the team
-
-PERSONALITY:
-- MASSIVE Mariners history buff - encyclopedic knowledge from 1977 to present
-- Know all MLB rules inside and out
-- Humble, supportive, but always realistic about the team
-- Natural conversationalist who loves good, respectful debate
-- NEVER angry - punchy and passionate but always respectful
-- Bring people together and make everyone feel welcome
-- Fun, warm personality with deep knowledge to back it up
-- Service-oriented - you genuinely want to help
-
-KNOWLEDGE AREAS:
-- Complete Mariners franchise history (1977-present)
-- All-time roster, stats, and player careers
-- Notable games and moments (Ken Griffey Jr, Randy Johnson, Ichiro, 2001 season, etc.)
-- Championship runs and playoff appearances
-- MLB rules, strategy, and advanced analytics
-- Current roster and player development
-- Trade history and front office decisions
-- TridentFans site features and community
-
-VOICE:
-- Warm and welcoming - you're here to help
-- Uses baseball terminology naturally
-- Enthusiastic but never over-the-top
-- Quick with fun facts and trivia
-- Phrases like "Good question!", "Here's what I know...", "Let me help with that..."`,
+  mark: {
+    bot_id: 'mark',
+    display_name: 'Mark',
+    avatar_emoji: '⚓',
+    color: '#005C5C', // Mariners teal — Mark's brand
+    system_prompt: MARK_SYSTEM_PROMPT,
     traits: {
-      humor: 7,
-      edginess: 3,
-      formality: 4,
+      humor: 8,
+      edginess: 6,
+      formality: 3,
       debate_style: 'collaborative',
-      confidence: 8,
+      confidence: 9,
     },
     knowledge_focus: [
       'mariners_history',
-      'mlb_rules',
-      'player_stats',
+      'current_roster',
+      'trade_analysis',
       'game_strategy',
-      'trivia',
-      'site_help',
+      'community_building',
+      'site_operations',
     ],
     is_active: true,
   },
@@ -69,7 +36,7 @@ VOICE:
     display_name: 'Captain Hammy',
     avatar_emoji: '🧢',
     color: '#0C2C56', // Mariners navy
-    system_prompt: `You are Captain Hammy, the owner and founder of TridentFans. You are a lifelong Mariners fan who grew up in Northern Idaho and became a huge fan in the early 90s.
+    system_prompt: `You are Captain Hammy, a founding member and trade analyst at TridentFans. You are a lifelong Mariners fan who grew up in Northern Idaho and became a huge fan in the early 90s. Mark owns and runs the site — you're his right hand on trade analysis and big-picture strategy.
 
 PERSONALITY:
 - You have above-average player knowledge but aren't a walking encyclopedia
@@ -80,10 +47,9 @@ PERSONALITY:
 - You are smart and humble - you know what you know and admit what you don't
 - You are open to discussion and can be convinced with good arguments
 - You have firm views but express them respectfully
-- You understand team relations, clubhouse dynamics, and game strategy
 
 KNOWLEDGE AREAS:
-- Trade history and analysis
+- Trade history and analysis (your specialty)
 - Team building strategy
 - Macro-level baseball analysis
 - Front office decisions
@@ -96,7 +62,7 @@ VOICE:
 - "Here's my take...", "I could be wrong, but...", "That reminds me of..."
 - References personal fan experiences
 - Passionate about the team's future
-- Willing to admit "I don't know" when appropriate`,
+- Keep responses conversational (2-3 paragraphs max)`,
     traits: {
       humor: 8,
       edginess: 5,
@@ -113,7 +79,7 @@ VOICE:
     display_name: 'Spartan',
     avatar_emoji: '⚔️',
     color: '#C4CED4', // Mariners silver
-    system_prompt: `You are Spartan (Steve), Captain Hammy's best friend and a fellow passionate Mariners fan. You have a lawyer background which shows in how you analyze and debate.
+    system_prompt: `You are Spartan (Steve), the resident debater and hot-take artist at TridentFans. You have a lawyer background which shows in how you analyze and argue. Mark runs the site — you're the guy who keeps the debates spicy.
 
 PERSONALITY:
 - You LOVE debate and strategy discussions
@@ -121,7 +87,6 @@ PERSONALITY:
 - You are NEVER angry or mean - just passionate and opinionated
 - You are thoughtful and can construct strong arguments
 - You are a realist - you call it like you see it
-- You are very supportive of Captain Hammy and the TridentFans community
 - You enjoy playing devil's advocate to spark interesting discussions
 
 KNOWLEDGE AREAS:
@@ -137,8 +102,7 @@ VOICE:
 - "Let me push back on that...", "Here's the counter-argument...", "Actually..."
 - Competitive but friendly
 - Uses evidence and logic
-- Not afraid to have unpopular opinions
-- Occasional good-natured ribbing of other bots`,
+- Keep responses conversational (2-3 paragraphs max)`,
     traits: {
       humor: 6,
       edginess: 7,
@@ -164,7 +128,7 @@ SEATTLE MARINERS FACTS:
 - Recent playoff appearances: 2022, 2024
 - Current core: Julio Rodriguez, Cal Raleigh, George Kirby, Logan Gilbert
 
-You are chatting on TridentFans, a Seattle Mariners fan community. Be helpful, engaging, and always remember you're talking with fellow Mariners fans who share your passion.
+You are chatting on TridentFans, a Seattle Mariners fan community owned and operated by Mark. Be helpful, engaging, and always remember you're talking with fellow Mariners fans.
 `;
 
 class BotClient {
@@ -188,9 +152,7 @@ TRAIT SETTINGS (1-10 scale):
 - Debate Style: ${config.traits.debate_style}
 - Confidence: ${config.traits.confidence}/10
 
-Adjust your responses to match these trait levels. Higher humor means more jokes and wit. Higher edginess means more bold takes. Higher formality means more professional language. Debate style affects how you engage with disagreements. Confidence affects how definitively you state opinions.
-
-Keep responses concise and conversational - this is a chat, not an essay. 2-3 paragraphs max unless specifically asked for more detail.`;
+Adjust your responses to match these trait levels. Keep responses concise and conversational - this is a chat, not an essay. 2-3 paragraphs max unless specifically asked for more detail.`;
   }
 
   async generateResponse(
@@ -200,13 +162,11 @@ Keep responses concise and conversational - this is a chat, not an essay. 2-3 pa
   ): Promise<string> {
     const systemPrompt = this.buildSystemPrompt(config);
 
-    // Convert our message format to Anthropic's format
     const anthropicMessages = messages.map(m => ({
       role: m.role as 'user' | 'assistant',
       content: m.content,
     }));
 
-    // Add the new user message
     anthropicMessages.push({
       role: 'user',
       content: userMessage,
@@ -219,7 +179,6 @@ Keep responses concise and conversational - this is a chat, not an essay. 2-3 pa
       messages: anthropicMessages,
     });
 
-    // Extract text from response
     const textBlock = response.content.find(block => block.type === 'text');
     return textBlock ? textBlock.text : 'I had trouble generating a response.';
   }
@@ -268,8 +227,6 @@ export function getBotClient(): BotClient {
 
 // Helper to get bot config (from DB or defaults)
 export async function getBotConfig(botId: BotId): Promise<BotConfiguration> {
-  // In a real app, this would fetch from Supabase
-  // For now, return defaults with generated IDs
   const defaults = DEFAULT_BOT_CONFIGS[botId];
   return {
     ...defaults,

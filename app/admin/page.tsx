@@ -35,7 +35,7 @@ import { NotificationAdmin } from '@/components/admin/NotificationAdmin';
 import { AdminLayout, AdminPlaceholder, type AdminSection } from '@/components/admin/AdminLayout';
 import { AdminSettings } from '@/components/admin/AdminSettings';
 
-const _botIds: BotId[] = ['moose', 'captain_hammy', 'spartan'];
+const _botIds: BotId[] = ['mark', 'captain_hammy', 'spartan'];
 
 // Bot mode toggle component for Hammy/Spartan
 function BotModeToggle({
@@ -180,7 +180,7 @@ function BotConfigPanel({ botId }: { botId: BotId }) {
       <div className="flex items-center gap-4">
         <div
           className={`flex h-14 w-14 items-center justify-center rounded-full text-2xl ${
-            botId === 'moose'
+            botId === 'mark'
               ? 'bg-mariners-teal'
               : botId === 'captain_hammy'
                 ? 'bg-mariners-navy'
@@ -514,7 +514,7 @@ function AdminDashboard() {
   );
 }
 
-// Bots Section with presence toggles and Moose config
+// Bots Section with presence toggles and Mark config
 function BotsSection({ adminPassword }: { adminPassword: string }) {
   return (
     <div className="space-y-8">
@@ -564,17 +564,16 @@ function BotsSection({ adminPassword }: { adminPassword: string }) {
         </CardContent>
       </Card>
 
-      {/* Marty Moose Configuration */}
+      {/* Mark Configuration */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <span className="text-2xl">🫎</span>
-            Marty Moose - Site Manager
+            <span className="text-2xl">⚓</span>
+            Mark - Owner & Operator
           </CardTitle>
           <CardDescription>
-            Marty is TridentFans&apos; clubhouse manager - the most knowledgeable and helpful
-            member of the team. He&apos;s available 24/7 to help fans with anything
-            Mariners-related.
+            Mark owns and operates TridentFans. He runs the site like a business — creating
+            content, engaging users, and keeping the community alive 24/7.
           </CardDescription>
         </CardHeader>
       </Card>
@@ -582,7 +581,7 @@ function BotsSection({ adminPassword }: { adminPassword: string }) {
       {/* Knowledge Base Section */}
       <KnowledgeBasePanel adminPassword={adminPassword} />
 
-      <BotConfigPanel botId="moose" />
+      <BotConfigPanel botId="mark" />
     </div>
   );
 }

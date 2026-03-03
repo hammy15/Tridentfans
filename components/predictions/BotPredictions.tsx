@@ -22,8 +22,8 @@ interface BotPredictionsProps {
 }
 
 const BOT_INFO: Record<string, { emoji: string; name: string; color: string }> = {
-  moose: { emoji: '🫎', name: 'Moose', color: 'bg-amber-500/10 border-amber-500/30' },
-  captain_hammy: { emoji: '🧢', name: 'Captain Hammy', color: 'bg-mariners-teal/10 border-mariners-teal/30' },
+  mark: { emoji: '⚓', name: 'Mark', color: 'bg-mariners-teal/10 border-mariners-teal/30' },
+  captain_hammy: { emoji: '🧢', name: 'Captain Hammy', color: 'bg-mariners-navy/10 border-mariners-navy/30' },
   spartan: { emoji: '⚔️', name: 'Spartan', color: 'bg-red-500/10 border-red-500/30' },
 };
 

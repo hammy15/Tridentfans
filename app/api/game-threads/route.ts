@@ -7,7 +7,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-// System user ID for auto-created posts (Moose bot)
+// System user ID for auto-created posts (Mark)
 const SYSTEM_USER_ID = process.env.SYSTEM_USER_ID || null;
 
 // GET - Check upcoming games that need threads
@@ -107,17 +107,17 @@ export async function POST(request: NextRequest) {
 
 ---
 
-## Pre-Game Discussion
+It's game day. Let's talk about it.
 
-Share your predictions, lineup thoughts, and get hyped for the game!
+Drop your predictions, lineup takes, and anything else before first pitch. I'll be in here all game.
 
-### Quick Links
+**Quick Links:**
 - [Make your predictions](/predictions)
 - [View roster](/roster)
 
----
+Go M's. ⚾
 
-*This thread was automatically created. Go Mariners!* ⚾🔱`;
+— Mark`;
 
     // Create the post
     const { data: post, error } = await supabase

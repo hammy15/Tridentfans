@@ -25,7 +25,7 @@ interface HumanEntry {
 }
 
 const BOT_EMOJIS: Record<string, string> = {
-  moose: '🫎',
+  mark: '⚓',
   captain_hammy: '🧢',
   spartan: '⚔️',
 };

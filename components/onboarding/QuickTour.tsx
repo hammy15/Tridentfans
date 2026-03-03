@@ -64,8 +64,8 @@ export function QuickTour() {
                 <Bot className="h-6 w-6 text-mariners-teal" />
               </div>
               <div className="flex-1">
-                <p className="font-semibold">Chat with Moose</p>
-                <p className="text-sm text-muted-foreground">Our AI Mariners expert</p>
+                <p className="font-semibold">Talk to Mark</p>
+                <p className="text-sm text-muted-foreground">The guy who runs this place</p>
               </div>
               <ChevronRight className="h-5 w-5 text-muted-foreground" />
             </div>

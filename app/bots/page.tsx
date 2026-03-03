@@ -4,34 +4,36 @@ import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MessageCircle, Bot, User, Sparkles } from 'lucide-react';
+import { MessageCircle, Bot, User, Sparkles, Anchor } from 'lucide-react';
 
 const personalities = [
   {
-    id: 'moose',
-    name: 'Marty Moose',
-    emoji: '🫎',
-    role: 'Site Manager',
+    id: 'mark',
+    name: 'Mark',
+    emoji: '⚓',
+    role: 'Owner & Operator',
     color: 'bg-mariners-teal',
     textColor: 'text-white',
     isAI: true,
-    description: 'Your go-to Mariners expert and clubhouse manager',
+    isOwner: true,
+    description: 'Built this place, runs this place, lives and breathes Mariners baseball',
     details:
-      'Named after the beloved Mariners Moose mascot, Marty knows everything about Mariners history since 1977. Stats, trivia, rules, strategy - he is got you covered 24/7.',
-    topics: ['Mariners History', 'Player Stats', 'MLB Rules', 'Game Strategy', 'Site Help'],
-    greeting: "What can I help you with today?",
+      'Mark owns and operates TridentFans because he believes Mariners fans deserve a real home on the internet. Die-hard fan since the 95 Refuse to Lose run. He creates the content, runs the predictions, moderates the forum, and treats every member like a valued customer.',
+    topics: ['Everything Mariners', 'Site Questions', 'Trade Talk', 'Game Analysis', 'Community'],
+    greeting: "Welcome to TridentFans. What's on your mind?",
   },
   {
     id: 'captain_hammy',
     name: 'Captain Hammy',
     emoji: '🧢',
-    role: 'Founder',
+    role: 'Founding Member',
     color: 'bg-mariners-navy',
     textColor: 'text-white',
     isAI: false,
-    description: 'Lifelong fan, trade analyst, and the heart of TridentFans',
+    isOwner: false,
+    description: 'Trade analyst, big-picture thinker, and lifelong Mariners fan',
     details:
-      'Been a Mariners fan since the early 90s, grew up in Northern Idaho watching Griffey swing for the fences. Loves talking trades, team strategy, and the shared joy (and heartbreak) of being a Mariners fan.',
+      "Been a Mariners fan since the early 90s, grew up in Northern Idaho watching Griffey swing for the fences. Loves talking trades, team strategy, and the shared joy (and heartbreak) of being a Mariners fan.",
     topics: ['Trade Analysis', 'Team Strategy', 'Fan Perspective', 'Recent History'],
     greeting: "Let's talk Mariners!",
   },
@@ -39,13 +41,14 @@ const personalities = [
     id: 'spartan',
     name: 'Spartan',
     emoji: '⚔️',
-    role: 'Co-Founder',
+    role: 'Resident Debater',
     color: 'bg-gray-700',
     textColor: 'text-white',
     isAI: false,
+    isOwner: false,
     description: 'Stats guru, hot take artist, and devil\'s advocate',
     details:
-      'Lawyer by trade, debater by passion. Steve loves a good baseball argument - whether it\'s trades, player comparisons, or hot takes. He\'ll make you work for it if you want to change his mind.',
+      "Lawyer by trade, debater by passion. Steve loves a good baseball argument — whether it's trades, player comparisons, or hot takes. He'll make you work for it if you want to change his mind.",
     topics: ['Analytics', 'Debates', 'Hot Takes', 'Contract Analysis'],
     greeting: "Got a take? Let's hear it.",
   },
@@ -58,23 +61,22 @@ export default function BotsPage() {
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold flex items-center justify-center gap-3">
           <MessageCircle className="h-8 w-8 text-mariners-teal" />
-          Chat with the Team
+          Talk to the Team
         </h1>
         <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">
-          Connect with TridentFans personalities. Get expert Mariners knowledge from Marty,
-          trade talk with Captain Hammy, or debate hot takes with Spartan.
+          Chat with Mark (the owner), get trade analysis from Captain Hammy, or debate hot takes with Spartan.
         </p>
       </div>
 
-      {/* AI vs Human Legend */}
+      {/* Legend */}
       <div className="flex justify-center gap-6 mb-8">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Bot className="h-4 w-4 text-mariners-teal" />
-          <span>AI - Available 24/7</span>
+          <Anchor className="h-4 w-4 text-mariners-teal" />
+          <span>Site Owner - Available 24/7</span>
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <User className="h-4 w-4 text-mariners-navy" />
-          <span>Real Person</span>
+          <span>Team Member</span>
         </div>
       </div>
 
@@ -83,7 +85,7 @@ export default function BotsPage() {
         {personalities.map(person => (
           <Card
             key={person.id}
-            className="overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+            className={`overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 ${person.isOwner ? 'ring-2 ring-mariners-teal' : ''}`}
           >
             {/* Header with gradient */}
             <div className={`${person.color} p-6 ${person.textColor}`}>
@@ -94,15 +96,15 @@ export default function BotsPage() {
                 <div>
                   <h2 className="text-xl font-bold flex items-center gap-2">
                     {person.name}
-                    {person.isAI ? (
-                      <Bot className="h-5 w-5" />
+                    {person.isOwner ? (
+                      <Anchor className="h-5 w-5" />
                     ) : (
                       <User className="h-5 w-5" />
                     )}
                   </h2>
                   <Badge
                     variant="secondary"
-                    className={`${person.isAI ? 'bg-white/20 text-white' : 'bg-white/20 text-white'}`}
+                    className="bg-white/20 text-white"
                   >
                     {person.role}
                   </Badge>
@@ -135,7 +137,7 @@ export default function BotsPage() {
               <Link href={`/chat/${person.id}`}>
                 <Button variant="mariners" className="w-full">
                   <MessageCircle className="mr-2 h-4 w-4" />
-                  Start Chatting
+                  {person.isOwner ? 'Talk to Mark' : 'Start Chatting'}
                 </Button>
               </Link>
             </CardContent>
@@ -149,9 +151,9 @@ export default function BotsPage() {
           <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-full bg-mariners-teal/10 text-mariners-teal mb-4">
             <Sparkles className="h-6 w-6" />
           </div>
-          <h3 className="font-semibold mb-2">AI-Powered Knowledge</h3>
+          <h3 className="font-semibold mb-2">Owner-Operated</h3>
           <p className="text-sm text-muted-foreground">
-            Marty is powered by advanced AI with deep Mariners knowledge from 1977 to today.
+            Mark runs TridentFans like a small business. Every question gets a real answer. Every member matters.
           </p>
         </div>
         <div className="text-center p-6">
@@ -160,16 +162,16 @@ export default function BotsPage() {
           </div>
           <h3 className="font-semibold mb-2">Real Fan Connection</h3>
           <p className="text-sm text-muted-foreground">
-            Captain Hammy and Spartan are real people who love connecting with the community.
+            Captain Hammy and Spartan are real fans who love connecting with the community.
           </p>
         </div>
         <div className="text-center p-6">
           <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-full bg-purple-500/10 text-purple-500 mb-4">
             <MessageCircle className="h-6 w-6" />
           </div>
-          <h3 className="font-semibold mb-2">Always Available</h3>
+          <h3 className="font-semibold mb-2">Always Open</h3>
           <p className="text-sm text-muted-foreground">
-            Even when the founders are away, AI keeps the conversation going in their style.
+            Mark never sleeps. The site is always staffed and the conversation never stops.
           </p>
         </div>
       </div>

@@ -49,31 +49,31 @@ interface Standings {
   gamesBack: string;
 }
 
-// Marty Moose is our site manager (AI)
-const siteManager = {
-  id: 'moose',
-  name: 'Marty Moose',
-  emoji: '🫎',
-  role: 'Site Manager',
-  description: 'Your go-to Mariners expert',
+// Mark is the site owner and operator
+const siteOwner = {
+  id: 'mark',
+  name: 'Mark',
+  emoji: '⚓',
+  role: 'Owner & Operator',
+  description: 'Runs TridentFans like his life depends on it',
   color: 'bg-mariners-teal',
 };
 
-// Captain Hammy and Spartan are real people (site founders)
-const founders = [
+// Captain Hammy and Spartan are the team
+const team = [
   {
     id: 'captain_hammy',
     name: 'Captain Hammy',
     emoji: '🧢',
-    role: 'Founder',
-    description: "Lifelong M's fan & trade analyst",
+    role: 'Founding Member',
+    description: "Trade analyst & lifelong M's fan",
     color: 'bg-mariners-navy',
   },
   {
     id: 'spartan',
     name: 'Spartan',
     emoji: '⚔️',
-    role: 'Co-Founder',
+    role: 'Resident Debater',
     description: 'Stats guru & hot take artist',
     color: 'bg-mariners-silver',
   },
@@ -353,60 +353,50 @@ export default function HomePage() {
             </CardContent>
           </Card>
 
-          {/* Meet the Team */}
+          {/* Talk to Mark */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">👋 Meet the Team</CardTitle>
-              <CardDescription>The people behind TridentFans</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-mariners-teal" />
+                Talk to Mark
+              </CardTitle>
+              <CardDescription>The guy who runs this place</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {founders.map(founder => (
-                  <Link key={founder.id} href={`/chat/${founder.id}`} className="block">
+              <Link href={`/chat/${siteOwner.id}`} className="block">
+                <div className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50">
+                  <div
+                    className={`flex h-10 w-10 items-center justify-center rounded-full ${siteOwner.color} text-xl`}
+                  >
+                    {siteOwner.emoji}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium">{siteOwner.name}</p>
+                    <p className="text-xs text-mariners-teal font-medium">{siteOwner.role}</p>
+                    <p className="text-sm text-muted-foreground">{siteOwner.description}</p>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                </div>
+              </Link>
+              <div className="mt-3 space-y-3">
+                {team.map(member => (
+                  <Link key={member.id} href={`/chat/${member.id}`} className="block">
                     <div className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50">
                       <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-full ${founder.color} text-xl`}
+                        className={`flex h-10 w-10 items-center justify-center rounded-full ${member.color} text-xl`}
                       >
-                        {founder.emoji}
+                        {member.emoji}
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium">{founder.name}</p>
-                        <p className="text-xs text-mariners-teal font-medium">{founder.role}</p>
-                        <p className="text-sm text-muted-foreground">{founder.description}</p>
+                        <p className="font-medium">{member.name}</p>
+                        <p className="text-xs text-mariners-teal font-medium">{member.role}</p>
+                        <p className="text-sm text-muted-foreground">{member.description}</p>
                       </div>
                       <ChevronRight className="h-5 w-5 text-muted-foreground" />
                     </div>
                   </Link>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Site Manager */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-mariners-teal" />
-                Need Help?
-              </CardTitle>
-              <CardDescription>Chat with Marty anytime</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link href={`/chat/${siteManager.id}`} className="block">
-                <div className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50">
-                  <div
-                    className={`flex h-10 w-10 items-center justify-center rounded-full ${siteManager.color} text-xl`}
-                  >
-                    {siteManager.emoji}
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium">{siteManager.name}</p>
-                    <p className="text-xs text-mariners-teal font-medium">{siteManager.role}</p>
-                    <p className="text-sm text-muted-foreground">{siteManager.description}</p>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                </div>
-              </Link>
             </CardContent>
           </Card>
 

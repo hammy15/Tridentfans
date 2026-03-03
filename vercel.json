@@ -7,6 +7,10 @@
       "schedule": "0 8 * * *"
     },
     {
+      "path": "/api/cron/mark-daily",
+      "schedule": "0 16 * * *"
+    },
+    {
       "path": "/api/cron/game-threads",
       "schedule": "0 15 * * *"
     },

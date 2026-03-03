@@ -348,7 +348,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Add bot predictions for completed games
-        for (const botId of ['moose', 'captain_hammy', 'spartan']) {
+        for (const botId of ['mark', 'captain_hammy', 'spartan']) {
           const botPredictedMariners = botId === 'spartan' ? Math.random() > 0.5 : Math.random() > 0.35;
           const predMarinersRuns = Math.floor(Math.random() * 5) + 3;
           const predOpponentRuns = botPredictedMariners
@@ -382,7 +382,7 @@ export async function POST(request: NextRequest) {
     // Create sample bot conversations
     for (let i = 0; i < 15; i++) {
       const userId = profileIds[Math.floor(Math.random() * profileIds.length)];
-      const botId = ['moose', 'captain_hammy', 'spartan'][Math.floor(Math.random() * 3)];
+      const botId = ['mark', 'captain_hammy', 'spartan'][Math.floor(Math.random() * 3)];
 
       const { error } = await supabase.from('bot_conversations').insert({
         user_id: userId,

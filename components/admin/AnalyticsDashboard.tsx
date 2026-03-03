@@ -75,7 +75,7 @@ export function AnalyticsDashboard() {
           users: { total: 0, newThisWeek: 0, activeToday: 0 },
           forum: { totalPosts: 0, totalComments: 0, postsThisWeek: 0 },
           predictions: { totalPredictions: 0, gamesWithPredictions: 0, avgPredictionsPerGame: 0 },
-          bots: { totalConversations: 0, conversationsThisWeek: 0, mostPopularBot: 'Moose' },
+          bots: { totalConversations: 0, conversationsThisWeek: 0, mostPopularBot: 'Mark' },
           donations: { total: 0, thisMonth: 0, donorCount: 0 },
           badges: { totalAwarded: 0 },
         });
@@ -85,7 +85,7 @@ export function AnalyticsDashboard() {
         users: { total: 0, newThisWeek: 0, activeToday: 0 },
         forum: { totalPosts: 0, totalComments: 0, postsThisWeek: 0 },
         predictions: { totalPredictions: 0, gamesWithPredictions: 0, avgPredictionsPerGame: 0 },
-        bots: { totalConversations: 0, conversationsThisWeek: 0, mostPopularBot: 'Moose' },
+        bots: { totalConversations: 0, conversationsThisWeek: 0, mostPopularBot: 'Mark' },
         donations: { total: 0, thisMonth: 0, donorCount: 0 },
         badges: { totalAwarded: 0 },
       });

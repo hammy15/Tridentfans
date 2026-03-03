@@ -32,9 +32,9 @@ const steps: Step[] = [
   },
   {
     icon: <Bot className="h-8 w-8 text-mariners-teal" />,
-    title: 'Chat with AI Bots',
+    title: 'Chat with Mark & the Team',
     description:
-      'Meet Moose, Captain Hammy, and Spartan - our AI-powered Mariners experts. Ask them anything about the team!',
+      'Meet Mark (the owner), Captain Hammy, and Spartan — talk Mariners, ask questions, or debate hot takes!',
     action: { label: 'Start Chatting', href: '/bots' },
   },
   {

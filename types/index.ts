@@ -24,7 +24,7 @@ export interface Profile {
 }
 
 // Bot Types
-export type BotId = 'moose' | 'captain_hammy' | 'spartan';
+export type BotId = 'mark' | 'captain_hammy' | 'spartan';
 
 export interface BotTraits {
   humor: number; // 1-10

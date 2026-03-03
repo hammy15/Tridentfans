@@ -51,16 +51,16 @@ export function Footer() {
             <h4 className="font-semibold">The Team</h4>
             <ul className="space-y-2 text-sm text-white/70">
               <li className="flex items-center gap-2">
+                <span>⚓</span>
+                <span>Mark - Owner & Operator</span>
+              </li>
+              <li className="flex items-center gap-2">
                 <span>🧢</span>
-                <span>Captain Hammy - Founder</span>
+                <span>Captain Hammy - Founding Member</span>
               </li>
               <li className="flex items-center gap-2">
                 <span>⚔️</span>
-                <span>Spartan - Co-Founder</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <span>🫎</span>
-                <span>Marty Moose - Site Manager</span>
+                <span>Spartan - Resident Debater</span>
               </li>
             </ul>
           </div>

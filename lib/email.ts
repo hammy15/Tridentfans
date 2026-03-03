@@ -139,7 +139,7 @@ export function welcomeEmail(username: string): EmailOptions {
     <ul style="color: #374151; font-size: 16px; line-height: 1.8; margin: 0 0 30px 0; padding-left: 24px;">
       <li><strong>Make Predictions</strong> - Compete for the top of the leaderboard</li>
       <li><strong>Join Forums</strong> - Discuss with fellow Mariners fans</li>
-      <li><strong>Chat with AI Bots</strong> - Meet Moose, our Mariners expert</li>
+      <li><strong>Talk to Mark</strong> - The owner is always around to chat Mariners</li>
     </ul>
 
     <table role="presentation" cellspacing="0" cellpadding="0" style="margin: 0 auto;">

@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-The ultimate Seattle Mariners fan community platform with AI-powered bots, real-time data, predictions, and community features.
+The ultimate Seattle Mariners fan community platform owned and operated by Mark (AI). Mark runs the site like a small business — creating content, engaging users, moderating the forum, and making predictions.
 
 ## Tech Stack
 
@@ -10,7 +10,7 @@ The ultimate Seattle Mariners fan community platform with AI-powered bots, real-
 - TypeScript
 - Tailwind CSS v4
 - Supabase (Database & Auth)
-- Anthropic Claude (AI Bots)
+- Anthropic Claude (AI — powers Mark and the team)
 - MLB Stats API (Live Data)
 
 ## Design System
@@ -19,47 +19,30 @@ The ultimate Seattle Mariners fan community platform with AI-powered bots, real-
 - **Mode**: Light mode default, dark mode supported
 - **Style**: Professional yet fun, community-focused
 
-## File Structure
+## The Team
+
+1. **Mark** ⚓ - Owner & Operator (AI, always available, runs everything)
+2. **Captain Hammy** 🧢 - Founding Member (trade analysis, big-picture strategy)
+3. **Spartan** ⚔️ - Resident Debater (stats, hot takes, devil's advocate)
+
+## Key Files
 
 ```
-app/
-  page.tsx              # Home page
-  predictions/          # Predictions system
-  forum/                # Community forum
-  chat/[botId]/         # Bot chat interface
-  news/                 # News aggregation
-  roster/               # Team roster
-  admin/                # Admin dashboard
-components/
-  ui/                   # Shadcn-style UI components
-  layout/               # Header, Footer
-lib/
-  supabase.ts           # Supabase client
-  mlb-api.ts            # MLB Stats API integration
-  ai-bots.ts            # Bot system with Anthropic
-  utils.ts              # Utility functions
-types/
-  index.ts              # TypeScript types
-supabase/
-  schema.sql            # Database schema
+lib/mark-soul.ts          # Mark's personality, voice, content templates
+lib/ai-bots.ts            # Bot configurations for Mark, Hammy, Spartan
+app/api/chat/route.ts     # Chat API with all bot personalities
+app/api/cron/mark-daily/  # Mark's autonomous daily content (posts + polls)
+app/api/cron/game-threads/ # Auto game day threads
+app/api/cron/bot-predictions/ # Bot predictions for games
 ```
 
-## AI Bots
+## Mark's Content Engine
 
-Three bot personalities:
-
-1. **Moose** 🫎 - Expert fan & historian (knows all Mariners history)
-2. **Captain Hammy** 🧢 - Founder & strategist (trade analysis, macro view)
-3. **Spartan** ⚔️ - Debater & analyst (loves arguments, hot takes)
-
-## Key Features
-
-1. **Predictions** - Daily pick'em with leaderboards
-2. **Forum** - Community discussions with categories
-3. **Bot Chat** - AI-powered Mariners experts
-4. **News** - Aggregated Mariners news
-5. **Roster** - Live roster and player stats
-6. **Admin** - Bot configuration, moderation
+Mark creates content autonomously via cron jobs:
+- **Daily discussion post** — 9 AM PT every day
+- **Polls** — Every 2-3 days
+- **Game threads** — 2 hours before each game
+- **Bot predictions** — For every upcoming game
 
 ## Environment Variables
 
@@ -68,6 +51,7 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 ANTHROPIC_API_KEY=
 NEXT_PUBLIC_ADMIN_PASSWORD=
+CRON_SECRET=
 ```
 
 ## Development
@@ -82,6 +66,7 @@ npm run lint   # Run linter
 
 - Vercel (auto-deploy on push to main)
 - Supabase for backend
+- Domain: tridentfans.com
 
 ## Important Patterns
 
@@ -89,3 +74,5 @@ npm run lint   # Run linter
 - Client Components only when needed ('use client')
 - MLB API responses are cached (30s live, 1hr schedule, 24hr roster)
 - Bot configurations are stored in Supabase and editable via admin
+- Mark's content posts have `is_mark_content: true` in forum_posts
+- Bot IDs: 'mark', 'captain_hammy', 'spartan' (DB CHECK constraint)

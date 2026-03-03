@@ -66,7 +66,7 @@ export async function GET() {
     // Get most popular bot
     const { data: botConversations } = await supabase.from('bot_conversations').select('bot_id').limit(100);
 
-    let mostPopularBot = 'Moose';
+    let mostPopularBot = 'Mark';
     if (botConversations && botConversations.length > 0) {
       const botCounts: Record<string, number> = {};
       botConversations.forEach(c => {
@@ -76,7 +76,7 @@ export async function GET() {
       if (sorted.length > 0) {
         const botId = sorted[0][0];
         mostPopularBot =
-          botId === 'moose' ? 'Moose' : botId === 'captain_hammy' ? 'Captain Hammy' : 'Spartan';
+          botId === 'mark' ? 'Mark' : botId === 'captain_hammy' ? 'Captain Hammy' : 'Spartan';
       }
     }
 
@@ -91,7 +91,7 @@ export async function GET() {
 
     // Calculate bot prediction stats
     const botStats: Record<string, { points: number; predictions: number }> = {
-      moose: { points: 0, predictions: 0 },
+      mark: { points: 0, predictions: 0 },
       captain_hammy: { points: 0, predictions: 0 },
       spartan: { points: 0, predictions: 0 },
     };
@@ -106,8 +106,8 @@ export async function GET() {
     const botLeaderboard = Object.entries(botStats)
       .map(([id, stats]) => ({
         id,
-        name: id === 'moose' ? 'Moose' : id === 'captain_hammy' ? 'Captain Hammy' : 'Spartan',
-        emoji: id === 'moose' ? '🫎' : id === 'captain_hammy' ? '🧢' : '⚔️',
+        name: id === 'mark' ? 'Mark' : id === 'captain_hammy' ? 'Captain Hammy' : 'Spartan',
+        emoji: id === 'mark' ? '⚓' : id === 'captain_hammy' ? '🧢' : '⚔️',
         points: stats.points,
         predictions: stats.predictions,
         accuracy: stats.predictions > 0 ? Math.round((stats.points / (stats.predictions * 10)) * 100) : 0,
@@ -152,7 +152,7 @@ export async function GET() {
         users: { total: 0, newThisWeek: 0, activeToday: 0 },
         forum: { totalPosts: 0, totalComments: 0, postsThisWeek: 0 },
         predictions: { totalPredictions: 0, gamesWithPredictions: 0, avgPredictionsPerGame: 0 },
-        bots: { totalConversations: 0, conversationsThisWeek: 0, mostPopularBot: 'Moose' },
+        bots: { totalConversations: 0, conversationsThisWeek: 0, mostPopularBot: 'Mark' },
       },
       { status: 200 }
     );

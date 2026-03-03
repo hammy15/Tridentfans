@@ -8,7 +8,7 @@ const supabase = createClient(
 
 // Bot prediction styles
 const BOT_STYLES = {
-  moose: { confidence: 0.7 },
+  mark: { confidence: 0.7 },
   captain_hammy: { confidence: 0.6 },
   spartan: { confidence: 0.5 },
 };
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     let created = 0;
 
     for (const game of games) {
-      for (const botId of ['moose', 'captain_hammy', 'spartan'] as const) {
+      for (const botId of ['mark', 'captain_hammy', 'spartan'] as const) {
         // Check if prediction exists
         const { data: existing } = await supabase
           .from('bot_predictions')
@@ -108,10 +108,10 @@ function generateReasoning(
   const score = `${predictions.mariners_runs}-${predictions.opponent_runs}`;
 
   switch (botId) {
-    case 'moose':
+    case 'mark':
       return marinersWin
-        ? `Based on historical data against ${opponent}, I'm predicting a ${score} Mariners victory.`
-        : `The stats favor ${opponent} slightly. Calling it ${predictions.opponent_runs}-${predictions.mariners_runs}.`;
+        ? `I like our chances today against ${opponent}. Calling it ${score} Mariners. Let's go.`
+        : `Being honest — ${opponent} has the edge today. Calling it ${predictions.opponent_runs}-${predictions.mariners_runs}. Prove me wrong.`;
     case 'captain_hammy':
       return marinersWin
         ? `Got a good feeling about this one. Mariners win ${score}. Trust the process!`

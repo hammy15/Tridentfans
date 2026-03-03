@@ -19,7 +19,7 @@ const features = [
   {
     icon: Bot,
     title: 'AI Experts',
-    description: 'Chat with Moose, Hammy & Spartan',
+    description: 'Talk to Mark & the team',
     href: '/bots',
     color: 'from-emerald-400 to-teal-500',
     iconBg: 'bg-emerald-500',

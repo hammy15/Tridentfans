@@ -10,9 +10,9 @@ function getSupabase() {
 
 // Bot prediction styles
 const BOT_PREDICTION_STYLES = {
-  moose: {
+  mark: {
     style: 'analytical',
-    description: 'Based on historical data and statistics',
+    description: 'Mark calls it like he sees it — eyes on every game',
     confidence: 0.7,
   },
   captain_hammy: {
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
         .not('score', 'is', null);
 
       const botTotals: Record<string, { points: number; predictions: number }> = {
-        moose: { points: 0, predictions: 0 },
+        mark: { points: 0, predictions: 0 },
         captain_hammy: { points: 0, predictions: 0 },
         spartan: { points: 0, predictions: 0 },
       };
@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
         bots: Object.entries(botTotals).map(([id, data]) => ({
           botId: id,
           displayName:
-            id === 'moose' ? 'Moose' : id === 'captain_hammy' ? 'Captain Hammy' : 'Spartan',
+            id === 'mark' ? 'Mark' : id === 'captain_hammy' ? 'Captain Hammy' : 'Spartan',
           ...data,
           accuracy: data.predictions > 0 ? (data.points / (data.predictions * 10)) * 100 : 0,
         })),
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
     // Generate predictions for each bot
     const botPredictions = [];
 
-    for (const botId of ['moose', 'captain_hammy', 'spartan'] as const) {
+    for (const botId of ['mark', 'captain_hammy', 'spartan'] as const) {
       // Check if prediction already exists
       const { data: existing } = await getSupabase()
         .from('bot_predictions')
@@ -191,10 +191,10 @@ function generateReasoning(
   const score = `${predictions.mariners_runs}-${predictions.opponent_runs}`;
 
   switch (botId) {
-    case 'moose':
+    case 'mark':
       return marinersWin
-        ? `Based on the Mariners' historical performance against ${opponent} and our current pitching rotation, I'm predicting a ${score} victory. The numbers favor us here.`
-        : `Looking at the stats, ${opponent} has a slight edge in this matchup. I'm calling it ${predictions.opponent_runs}-${predictions.mariners_runs} for them, but anything can happen.`;
+        ? `I've watched every game this season and I like what I see in this matchup. Calling it ${score} Mariners. Our pitching has been locked in.`
+        : `Hate to say it, but ${opponent} has our number right now. I'm calling it ${predictions.opponent_runs}-${predictions.mariners_runs}. Prove me wrong, boys.`;
 
     case 'captain_hammy':
       return marinersWin

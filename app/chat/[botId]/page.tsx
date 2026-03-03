@@ -11,25 +11,25 @@ import { Badge } from '@/components/ui/badge';
 import { Send, ArrowLeft, Loader2, Bot, User } from 'lucide-react';
 
 const chatConfigs = {
-  moose: {
-    name: 'Marty Moose',
-    emoji: '🫎',
+  mark: {
+    name: 'Mark',
+    emoji: '⚓',
     color: 'bg-mariners-teal',
-    description: 'Your go-to Mariners expert',
+    description: 'Owner & Operator of TridentFans',
     isAI: true,
-    role: 'Site Manager',
+    role: 'Owner',
     greeting:
-      "Hey there, fellow Mariners fan! 🫎 I'm Marty Moose, the clubhouse manager here at TridentFans. Think of me as your go-to guy for anything Mariners - history, stats, players, strategy, you name it. I'm here around the clock to help out and chat baseball. What can I help you with?",
+      "Hey, welcome to TridentFans! I'm Mark — I own and run this place. Built it because Mariners fans deserve a real home on the internet. Whether you want to talk trades, argue about the lineup, or just vent about the bullpen, you're in the right place. What's on your mind?",
   },
   captain_hammy: {
     name: 'Captain Hammy',
     emoji: '🧢',
     color: 'bg-mariners-navy',
-    description: "Lifelong M's fan & trade analyst",
+    description: "Trade analyst & M's lifer",
     isAI: false,
-    role: 'Founder',
+    role: 'Founding Member',
     greeting:
-      "What's up! I'm Captain Hammy, the founder of TridentFans. Been a Mariners fan since the early 90s - grew up in Northern Idaho watching Ken Griffey Jr. swing for the fences. I love talking trades, team strategy, and sharing in both the joy and heartbreak of being a Mariners fan. Drop me a message!",
+      "What's up! I'm Captain Hammy — been a Mariners fan since the early 90s, grew up in Northern Idaho watching Griffey swing for the fences. I love talking trades, team strategy, and sharing in the joy and heartbreak of being a Mariners fan. Drop me a message!",
   },
   spartan: {
     name: 'Spartan',
@@ -37,9 +37,9 @@ const chatConfigs = {
     color: 'bg-mariners-silver',
     description: 'Stats guru & hot take artist',
     isAI: false,
-    role: 'Co-Founder',
+    role: 'Resident Debater',
     greeting:
-      "Hey! I'm Spartan - Steve to my friends. I help run TridentFans with Captain Hammy. Love a good baseball debate - whether it's trades, player comparisons, or hot takes. I'm a lawyer by trade so I'll make you work for it if you want to change my mind. What's your take?",
+      "Hey! I'm Spartan — Steve to my friends. I keep the debates spicy around here. Love a good baseball argument — trades, player comparisons, hot takes. I'm a lawyer by trade so I'll make you work for it if you want to change my mind. What's your take?",
   },
 };
 
@@ -111,7 +111,7 @@ export default function ChatPage() {
     setMessages(newMessages);
     setInput('');
 
-    // For AI (Moose) or bot mode enabled, get AI response
+    // For AI (Mark) or bot mode enabled, get AI response
     if (person.isAI || botModeEnabled) {
       setIsLoading(true);
       try {

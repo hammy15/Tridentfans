@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
   // Only captain_hammy and spartan can have bot mode toggled
   if (id !== 'captain_hammy' && id !== 'spartan') {
-    return NextResponse.json({ botModeEnabled: true }); // Moose is always AI
+    return NextResponse.json({ botModeEnabled: true }); // Mark is always AI
   }
 
   try {

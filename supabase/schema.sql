@@ -36,7 +36,7 @@ CREATE POLICY "Users can update own profile" ON profiles
 
 CREATE TABLE bot_configurations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  bot_id TEXT UNIQUE NOT NULL CHECK (bot_id IN ('moose', 'captain_hammy', 'spartan')),
+  bot_id TEXT UNIQUE NOT NULL CHECK (bot_id IN ('mark', 'captain_hammy', 'spartan')),
   display_name TEXT NOT NULL,
   avatar_emoji TEXT NOT NULL,
   color TEXT NOT NULL,
@@ -72,7 +72,7 @@ CREATE POLICY "Only admins can update bot configs" ON bot_configurations
 CREATE TABLE bot_conversations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
-  bot_id TEXT NOT NULL CHECK (bot_id IN ('moose', 'captain_hammy', 'spartan')),
+  bot_id TEXT NOT NULL CHECK (bot_id IN ('mark', 'captain_hammy', 'spartan')),
   messages JSONB NOT NULL DEFAULT '[]',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   ended_at TIMESTAMPTZ
