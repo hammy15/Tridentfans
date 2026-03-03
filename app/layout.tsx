@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     'AL West',
   ],
   authors: [{ name: 'TridentFans' }],
-  creator: 'Captain Hammy',
+  creator: 'Mark',
   metadataBase: new URL('https://tridentfans.com'),
   openGraph: {
     title: 'TridentFans - Seattle Mariners Fan Community',
@@ -86,9 +86,34 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
 };
 
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'TridentFans',
+  url: 'https://tridentfans.com',
+  description: 'The ultimate Seattle Mariners fan community. Forum, predictions, live game threads, and real-time data.',
+  publisher: {
+    '@type': 'Organization',
+    name: 'TridentFans',
+    url: 'https://tridentfans.com',
+    logo: 'https://tridentfans.com/icons/icon-512x512.png',
+  },
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: 'https://tridentfans.com/forum?q={search_term_string}',
+    'query-input': 'required name=search_term_string',
+  },
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body className="min-h-screen bg-background font-sans antialiased">
         <ThemeProvider>
           <AuthProvider>

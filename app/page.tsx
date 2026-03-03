@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { LiveGameBanner } from '@/components/live/LiveGameBanner';
 import { FirstPredictionPrompt } from '@/components/onboarding/FirstPredictionPrompt';
+import { SpreadTheWord } from '@/components/marketing/SpreadTheWord';
 
 interface UpcomingGame {
   gamePk: number;
@@ -443,6 +444,11 @@ export default function HomePage() {
           </Card>
         </div>
       </div>
+
+      {/* Spread the Word */}
+      <section className="mt-12">
+        <SpreadTheWord />
+      </section>
     </div>
   );
 }

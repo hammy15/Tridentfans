@@ -1,9 +1,10 @@
 -- Migration: Replace 'moose' bot with 'mark' bot
 -- Mark is the new site owner/operator
 
--- Step 1: Drop the CHECK constraints that reference 'moose'
+-- Step 1: Drop ALL CHECK constraints on bot_id across all tables
 ALTER TABLE bot_configurations DROP CONSTRAINT IF EXISTS bot_configurations_bot_id_check;
 ALTER TABLE bot_conversations DROP CONSTRAINT IF EXISTS bot_conversations_bot_id_check;
+ALTER TABLE bot_predictions DROP CONSTRAINT IF EXISTS bot_predictions_bot_id_check;
 
 -- Step 2: Update existing moose data to mark
 UPDATE bot_configurations SET bot_id = 'mark', display_name = 'Mark', avatar_emoji = '⚓', color = '#005C5C' WHERE bot_id = 'moose';
@@ -13,6 +14,7 @@ UPDATE bot_predictions SET bot_id = 'mark' WHERE bot_id = 'moose';
 -- Step 3: Re-add CHECK constraints with 'mark' instead of 'moose'
 ALTER TABLE bot_configurations ADD CONSTRAINT bot_configurations_bot_id_check CHECK (bot_id IN ('mark', 'captain_hammy', 'spartan'));
 ALTER TABLE bot_conversations ADD CONSTRAINT bot_conversations_bot_id_check CHECK (bot_id IN ('mark', 'captain_hammy', 'spartan'));
+ALTER TABLE bot_predictions ADD CONSTRAINT bot_predictions_bot_id_check CHECK (bot_id IN ('mark', 'captain_hammy', 'spartan'));
 
 -- Step 4: Update the seed bot configuration for Mark
 INSERT INTO bot_configurations (bot_id, display_name, avatar_emoji, color, system_prompt, traits, knowledge_focus, is_active)

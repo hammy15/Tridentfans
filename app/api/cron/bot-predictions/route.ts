@@ -110,16 +110,16 @@ function generateReasoning(
   switch (botId) {
     case 'mark':
       return marinersWin
-        ? `I like our chances today against ${opponent}. Calling it ${score} Mariners. Let's go.`
-        : `Being honest — ${opponent} has the edge today. Calling it ${predictions.opponent_runs}-${predictions.mariners_runs}. Prove me wrong.`;
+        ? `Like our chances today. ${score} M's. Feeling it.`
+        : `Gonna be honest... ${opponent} probably takes this one. ${predictions.opponent_runs}-${predictions.mariners_runs}. Prove me wrong though.`;
     case 'captain_hammy':
       return marinersWin
-        ? `Got a good feeling about this one. Mariners win ${score}. Trust the process!`
-        : `Tough to say, but I think we might drop this one ${predictions.opponent_runs}-${predictions.mariners_runs}.`;
+        ? `Good feeling about this one. Mariners ${score}. Trust the process.`
+        : `Not loving our matchup here. Think we drop it ${predictions.opponent_runs}-${predictions.mariners_runs}. Hope I'm wrong.`;
     case 'spartan':
       return marinersWin
-        ? `Everyone's sleeping on us. Mariners take it ${score}. Book it.`
-        : `Being real here - ${opponent} wins ${predictions.opponent_runs}-${predictions.mariners_runs}.`;
+        ? `Everyone sleeping on us. M's take it ${score}. Book it.`
+        : `Look. ${opponent} has the edge. ${predictions.opponent_runs}-${predictions.mariners_runs}. Just being real.`;
     default:
       return `Prediction: ${score}`;
   }

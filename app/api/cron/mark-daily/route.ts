@@ -107,7 +107,7 @@ Do NOT include markdown code fences. Just the raw JSON.`,
       messages: [
         {
           role: 'user',
-          content: `Create today's daily discussion post. Here's the current context:\n${contextInfo}\n\nMake it engaging, opinionated, and end with a question to drive discussion. Write it as Mark.`,
+          content: `Create today's daily discussion post. Context:\n${contextInfo}\n\nWrite as Mark — sound like a REAL PERSON, not an AI. Short sentences, fragments ok, casual grammar. Be opinionated. End with something that makes people want to reply. NEVER use profanity. 2-3 SHORT paragraphs max.`,
         },
       ],
     });
@@ -185,7 +185,7 @@ Do NOT include markdown code fences. Just the raw JSON.`,
       messages: [
         {
           role: 'user',
-          content: `Create an engaging Mariners poll for ${month} ${now.getFullYear()}. Mix it up — could be serious (trade proposals, lineup decisions) or fun (best walk-up song, greatest Mariner moment). Write as Mark.`,
+          content: `Create a Mariners poll for ${month} ${now.getFullYear()}. Mix it up — serious (trade proposals, lineup decisions) or fun (best walk-up song, greatest moment). Keep the question casual and human-sounding. NEVER use profanity.`,
         },
       ],
     });

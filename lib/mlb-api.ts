@@ -344,6 +344,89 @@ export interface LiveGameDetails {
 }
 
 /**
+ * Get Mariners recent transactions (trades, signings, DFA, etc.)
+ */
+export async function getMarinersTransactions(days = 30) {
+  const cacheKey = `transactions-${days}`;
+  const cached = getCached<unknown[]>(cacheKey);
+  if (cached) return cached;
+
+  const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split('T')[0];
+  const endDate = new Date().toISOString().split('T')[0];
+
+  try {
+    const response = await fetchMLB<{
+      transactions: Array<{
+        id: number;
+        date: string;
+        typeCode: string;
+        typeDesc: string;
+        description: string;
+        player?: { fullName: string };
+      }>;
+    }>(
+      `/transactions?teamId=${MARINERS_TEAM_ID}&startDate=${startDate}&endDate=${endDate}`
+    );
+    return setCache(cacheKey, response.transactions || [], CACHE_TTL.SCHEDULE);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Get league leaders for Mariners players
+ */
+export async function getMarinersStatLeaders(season?: number) {
+  const year = season || new Date().getFullYear();
+  const cacheKey = `leaders-${year}`;
+  const cached = getCached<unknown>(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const [hitting, pitching] = await Promise.all([
+      fetchMLB<{ stats: unknown[] }>(
+        `/teams/${MARINERS_TEAM_ID}/stats?stats=season&season=${year}&group=hitting&sortStat=onBasePlusSlugging&order=desc`
+      ),
+      fetchMLB<{ stats: unknown[] }>(
+        `/teams/${MARINERS_TEAM_ID}/stats?stats=season&season=${year}&group=pitching&sortStat=earnedRunAverage&order=asc`
+      ),
+    ]);
+    const result = { hitting: hitting.stats, pitching: pitching.stats };
+    return setCache(cacheKey, result, CACHE_TTL.STANDINGS);
+  } catch {
+    return { hitting: [], pitching: [] };
+  }
+}
+
+/**
+ * Get team record summary (for quick display)
+ */
+export async function getMarinersRecordSummary() {
+  const cacheKey = 'record-summary';
+  const cached = getCached<unknown>(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const standings = await getALWestStandings();
+    const mariners = standings.find((t) => t.team.id === MARINERS_TEAM_ID);
+    if (!mariners) return null;
+
+    const result = {
+      wins: mariners.wins,
+      losses: mariners.losses,
+      pct: mariners.winningPercentage,
+      gamesBack: mariners.gamesBack,
+      streak: mariners.streakCode,
+    };
+    return setCache(cacheKey, result, CACHE_TTL.STANDINGS);
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Get detailed live game data
  */
 export async function getDetailedLiveGame(gamePk: number): Promise<LiveGameDetails | null> {

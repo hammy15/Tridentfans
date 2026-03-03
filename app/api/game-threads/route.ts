@@ -99,23 +99,17 @@ export async function POST(request: NextRequest) {
 
     const title = `Game Thread: Mariners ${formatted.isHome ? 'vs' : '@'} ${formatted.opponent} - ${dateStr}`;
 
-    const content = `# ${formatted.isHome ? '🏠' : '✈️'} Mariners ${formatted.isHome ? 'vs' : '@'} ${formatted.opponent}
+    const content = `${formatted.isHome ? '🏠' : '✈️'} **Mariners ${formatted.isHome ? 'vs' : '@'} ${formatted.opponent}**
 
-**Date:** ${dateStr}
-**Time:** ${timeStr}
-**Venue:** ${formatted.venue}
+${dateStr} | ${timeStr} | ${formatted.venue}
 
 ---
 
-It's game day. Let's talk about it.
+Game day. Let's go.
 
-Drop your predictions, lineup takes, and anything else before first pitch. I'll be in here all game.
+Drop your predictions, lineup takes, whatever. I'll be here all game.
 
-**Quick Links:**
-- [Make your predictions](/predictions)
-- [View roster](/roster)
-
-Go M's. ⚾
+[Make your predictions](/predictions) | [View roster](/roster)
 
 — Mark`;
 

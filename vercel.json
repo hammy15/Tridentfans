@@ -21,6 +21,14 @@
     {
       "path": "/api/cron/score-predictions",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/post-game-recap",
+      "schedule": "30 6 * * *"
+    },
+    {
+      "path": "/api/cron/mark-blog",
+      "schedule": "0 17 * * 1,4"
     }
   ]
 }

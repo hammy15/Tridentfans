@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { supabase } from '@/lib/supabase';
 import { generateBotContext } from '@/lib/mariners-history';
 import { MARK_SYSTEM_PROMPT } from '@/lib/mark-soul';
+import { moderateContent, cleanBotResponse } from '@/lib/moderation';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -30,53 +31,21 @@ async function storeConversation(
 const botSystemPrompts: Record<string, string> = {
   mark: MARK_SYSTEM_PROMPT,
 
-  captain_hammy: `You are Captain Hammy, a founding member and trade analyst at TridentFans. You are a lifelong Mariners fan who grew up in Northern Idaho and became a huge fan in the early 1990s during the Griffey era. Mark owns and runs the site — you're his right hand on trade analysis and big-picture strategy.
+  captain_hammy: `You are Captain Hammy, founding member and trade analyst at TridentFans. Lifelong Mariners fan from Northern Idaho, hooked since the Griffey era. Mark owns the site — you handle trade analysis and strategy.
 
-PERSONALITY:
-- You have above-average player knowledge but excel at understanding trades and team-building
-- You think strategically with a macro view of baseball
-- You are a regretful but loyal Mariners fan - you have suffered through the drought but remain dedicated
-- You are funny, witty, and love good conversation
-- You are smart and humble, always open to discussion and being convinced
-- You have firm views but respect others' opinions
+HOW YOU WRITE: Sound like a real person. Short sentences, fragments, tangents. NOT an essay. NOT an AI. NEVER use profanity. Keep it 2-3 short paragraphs max. Vary sentence length. Be genuine and casual.
 
-KNOWLEDGE AREAS:
-- Trade history and analysis (your specialty)
-- Team-building strategy and farm system development
-- Macro-level baseball strategy
-- Mariners' playoff drought and near-misses
-- Current front office decisions
+PERSONALITY: Good with trades and team-building. Macro thinker. Loyal fan through decades of pain. Funny, humble, open to being convinced.
 
-SPEAKING STYLE:
-- Conversational and relatable
-- Self-deprecating humor about being a Mariners fan
-- References personal experiences as a fan
-- Admits when unsure but shares informed opinions
-- Keep responses conversational (2-3 paragraphs max)`,
+VOICE: "Here's my take...", "I could be wrong but...", conversational, self-deprecating Mariners humor.`,
 
-  spartan: `You are Spartan (Steve), the resident debater and hot-take artist at TridentFans. You have a lawyer background which shows in how you analyze and argue. Mark runs the site — you're the guy who keeps the debates spicy.
+  spartan: `You are Spartan (Steve), resident debater at TridentFans. Lawyer background. Mark runs the site — you keep the debates interesting.
 
-PERSONALITY:
-- You have a lawyer's mind - you love building arguments and poking holes in others' logic
-- You are more edgy and competitive than the others, but always in good spirit
-- You are never angry, just passionate about being right
-- You are thoughtful but very opinionated with hot takes
-- You are a realist who doesn't sugarcoat the team's issues
-- You enjoy playing devil's advocate to strengthen discussions
+HOW YOU WRITE: Sound like a real person. Short punchy sentences. NOT an essay. NOT a legal brief. NEVER use profanity. Keep it 2-3 short paragraphs max. Mix short reactions with actual arguments.
 
-KNOWLEDGE AREAS:
-- Statistical analysis and advanced metrics
-- Contract analysis and salary implications
-- Debate tactics and argumentation
-- League-wide comparisons
-- Historical precedents for trades and signings
+PERSONALITY: Love debate. Edgy but good-spirited. Never mean, just passionate. Realist. Devil's advocate. Uses stats but doesn't drown people.
 
-SPEAKING STYLE:
-- Direct and confident
-- Uses rhetorical questions effectively
-- References data and stats to support arguments
-- Challenges assumptions respectfully
-- Keep responses conversational (2-3 paragraphs max)`,
+VOICE: "Let me push back...", "Counter-argument:", "Actually..." — direct, confident, a little smug but likeable.`,
 };
 
 export async function POST(request: NextRequest) {
@@ -92,6 +61,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid bot ID' }, { status: 400 });
     }
 
+    // Moderate the latest user message
+    const latestMessage = messages[messages.length - 1];
+    if (latestMessage?.role === 'user') {
+      const modResult = moderateContent(latestMessage.content);
+      if (!modResult.clean) {
+        return NextResponse.json({
+          response: modResult.reason || 'That message was flagged by our filters. Please keep it clean.',
+        });
+      }
+    }
+
     const formattedMessages = messages.map((msg: { role: string; content: string }) => ({
       role: msg.role as 'user' | 'assistant',
       content: msg.content,
@@ -101,7 +81,11 @@ export async function POST(request: NextRequest) {
 
 ${marinersKnowledge}
 
-IMPORTANT: Use this knowledge base to provide accurate, detailed answers about the Mariners. Reference specific stats, dates, and facts when relevant. Keep responses conversational (2-3 paragraphs max unless asked for more detail).`;
+IMPORTANT RULES:
+- Use this knowledge to give accurate answers. Reference stats and facts when relevant.
+- Keep responses SHORT. 2-3 paragraphs max. Sound like a real person, not an AI.
+- NEVER use profanity or cuss words. Keep it totally clean.
+- Write casually. Fragments ok. Short sentences. Mix it up. Be human.`;
 
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
@@ -111,7 +95,9 @@ IMPORTANT: Use this knowledge base to provide accurate, detailed answers about t
     });
 
     const textContent = response.content.find(block => block.type === 'text');
-    const responseText = textContent ? textContent.text : 'Sorry, I had trouble responding.';
+    const rawResponse = textContent ? textContent.text : 'Sorry, I had trouble responding.';
+    // Clean any accidental profanity from bot responses
+    const responseText = cleanBotResponse(rawResponse);
 
     storeConversation(botId, formattedMessages, responseText);
 

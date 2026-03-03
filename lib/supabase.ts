@@ -175,6 +175,18 @@ export async function getForumPost(postId: string) {
 }
 
 export async function createForumPost(post: Omit<ForumPost, 'id' | 'upvotes' | 'created_at'>) {
+  // Moderate user-created content (skip Mark's system posts)
+  if (post.user_id) {
+    const { moderateContent } = await import('@/lib/moderation');
+    const titleCheck = moderateContent(post.title);
+    if (!titleCheck.clean) {
+      return { data: null, error: { message: titleCheck.reason } };
+    }
+    const contentCheck = moderateContent(post.content);
+    if (!contentCheck.clean) {
+      return { data: null, error: { message: contentCheck.reason } };
+    }
+  }
   const { data, error } = await supabase.from('forum_posts').insert(post).select().single();
   return { data, error };
 }

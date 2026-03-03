@@ -6,5 +6,11 @@ CREATE INDEX IF NOT EXISTS idx_forum_posts_mark_content ON forum_posts(is_mark_c
 
 -- Allow system (null user_id) posts for Mark's content
 -- Update RLS to allow inserts with null user_id from server
-CREATE POLICY IF NOT EXISTS "System can create posts" ON forum_posts
-  FOR INSERT WITH CHECK (user_id IS NULL OR auth.uid() = user_id);
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE policyname = 'System can create posts' AND tablename = 'forum_posts'
+  ) THEN
+    CREATE POLICY "System can create posts" ON forum_posts
+      FOR INSERT WITH CHECK (user_id IS NULL OR auth.uid() = user_id);
+  END IF;
+END $$;

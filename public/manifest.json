@@ -103,10 +103,10 @@
       "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
     },
     {
-      "name": "Chat with Moose",
-      "short_name": "Moose",
-      "description": "Talk to our AI bot",
-      "url": "/chat/moose",
+      "name": "Talk to Mark",
+      "short_name": "Mark",
+      "description": "Chat with the site owner",
+      "url": "/chat/mark",
       "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
     }
   ],
