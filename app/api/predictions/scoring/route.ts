@@ -200,18 +200,20 @@ async function scorePrediction(prediction: any, gameResults: any) {
         isCorrect = parseInt(prediction.prediction_value) === gameResults.total_runs;
         break;
 
-      case 'Total Runs Over/Under':
+      case 'Total Runs Over/Under': {
         const isOver = gameResults.total_runs > 8.5;
         isCorrect = (prediction.prediction_value === 'Over 8.5' && isOver) ||
                    (prediction.prediction_value === 'Under 8.5' && !isOver);
         break;
+      }
 
-      case 'Mariners Score First':
+      case 'Mariners Score First': {
         // Would need more detailed play-by-play data
         isCorrect = (prediction.prediction_value === 'true') === gameResults.mariners_won;
         break;
+      }
 
-      case 'Julio Rodriguez Hits':
+      case 'Julio Rodriguez Hits': {
         const julioHits = gameResults.julio_hits || 0;
         if (prediction.prediction_value === '3+') {
           isCorrect = julioHits >= 3;
@@ -219,8 +221,9 @@ async function scorePrediction(prediction: any, gameResults: any) {
           isCorrect = parseInt(prediction.prediction_value) === julioHits;
         }
         break;
+      }
 
-      case 'Cal Raleigh Home Runs':
+      case 'Cal Raleigh Home Runs': {
         const calHomers = gameResults.cal_home_runs || 0;
         if (prediction.prediction_value === '2+') {
           isCorrect = calHomers >= 2;
@@ -228,8 +231,9 @@ async function scorePrediction(prediction: any, gameResults: any) {
           isCorrect = parseInt(prediction.prediction_value) === calHomers;
         }
         break;
+      }
 
-      case 'Winning Margin':
+      case 'Winning Margin': {
         const margin = gameResults.winning_margin;
         if (prediction.prediction_value === '1 run') {
           isCorrect = margin === 1;
@@ -241,8 +245,9 @@ async function scorePrediction(prediction: any, gameResults: any) {
           isCorrect = margin >= 7;
         }
         break;
+      }
 
-      case 'Game Length':
+      case 'Game Length': {
         const gameMinutes = gameResults.game_length_minutes;
         if (prediction.prediction_value === 'Under 2:45') {
           isCorrect = gameMinutes < 165;
@@ -252,6 +257,7 @@ async function scorePrediction(prediction: any, gameResults: any) {
           isCorrect = gameMinutes > 195;
         }
         break;
+      }
 
       case 'Walk-off Situation':
         isCorrect = (prediction.prediction_value === 'true') === gameResults.walk_off;

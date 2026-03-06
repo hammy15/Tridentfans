@@ -129,3 +129,65 @@ export function getTeamLogo(teamId: number): string {
   return TEAM_LOGOS[teamId as keyof typeof TEAM_LOGOS] || 
          `https://www.mlbstatic.com/team-logos/team-cap-on-light/${teamId}.svg`;
 }
+
+// Additional exports for compatibility
+export async function getUpcomingGames(days = 7): Promise<Game[]> {
+  return getMarinersSchedule(days);
+}
+
+export async function getRecentGames(days = 7): Promise<Game[]> {
+  const endDate = new Date().toISOString().split('T')[0];
+  const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
+    .toISOString().split('T')[0];
+  
+  try {
+    const response = await fetch(
+      `${MLB_API_BASE}/schedule?sportId=1&teamId=${MARINERS_TEAM_ID}&startDate=${startDate}&endDate=${endDate}&hydrate=team,linescore,venue`
+    );
+    
+    const data = await response.json();
+    const games: Game[] = [];
+    
+    data.dates?.forEach((date: any) => {
+      date.games?.forEach((game: any) => {
+        games.push({
+          gamePk: game.gamePk,
+          gameDate: game.gameDate,
+          status: game.status,
+          teams: game.teams,
+          venue: game.venue,
+          gameType: game.gameType
+        });
+      });
+    });
+    
+    return games;
+  } catch (error) {
+    console.error('Failed to fetch recent games:', error);
+    return [];
+  }
+}
+
+export async function getTodaysGame(): Promise<Game | null> {
+  const games = await getTodaysGames();
+  return games.length > 0 ? games[0] : null;
+}
+
+export function formatGameForDisplay(game: Game): string {
+  const gameDate = new Date(game.gameDate);
+  const isHome = game.teams.home.team.id === MARINERS_TEAM_ID;
+  const opponent = isHome ? game.teams.away.team : game.teams.home.team;
+  
+  return `${isHome ? 'vs' : '@'} ${opponent.name} - ${gameDate.toLocaleDateString()}`;
+}
+
+export async function getMarinersRoster(): Promise<any[]> {
+  try {
+    const response = await fetch(`${MLB_API_BASE}/teams/${MARINERS_TEAM_ID}/roster?rosterType=active`);
+    const data = await response.json();
+    return data.roster || [];
+  } catch (error) {
+    console.error('Failed to fetch Mariners roster:', error);
+    return [];
+  }
+}

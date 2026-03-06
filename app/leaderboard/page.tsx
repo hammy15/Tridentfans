@@ -92,7 +92,7 @@ export default function LeaderboardPage() {
           display_name: entry.user?.display_name || null,
           avatar_url: entry.user?.avatar_url || null,
           total_points: entry.total_points,
-          accuracy: entry.accuracy,
+          accuracy: entry.accuracy && !isNaN(entry.accuracy) ? entry.accuracy : 0,
           season: entry.season,
         }));
         setLeaderboard(transformedData);
@@ -158,6 +158,14 @@ export default function LeaderboardPage() {
     return 'bg-muted';
   };
 
+  // Helper function to safely display accuracy percentage
+  const formatAccuracy = (accuracy: number | null | undefined): string => {
+    if (accuracy === null || accuracy === undefined || isNaN(accuracy)) {
+      return '0';
+    }
+    return Math.round(accuracy).toString();
+  };
+
   const shareData = {
     title: 'TridentFans Leaderboard',
     text: userRank
@@ -208,7 +216,7 @@ export default function LeaderboardPage() {
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-bold">{userStats.points.toLocaleString()}</p>
-                  <p className="text-sm text-white/70">{userStats.accuracy}% accuracy</p>
+                  <p className="text-sm text-white/70">{formatAccuracy(userStats.accuracy)}% accuracy</p>
                 </div>
               </div>
             </div>
@@ -263,7 +271,7 @@ export default function LeaderboardPage() {
                 {displayLeaderboard[1]?.total_points.toLocaleString()}
               </p>
               <p className="text-sm text-muted-foreground">
-                {displayLeaderboard[1]?.accuracy}% accuracy
+                {formatAccuracy(displayLeaderboard[1]?.accuracy)}% accuracy
               </p>
             </CardContent>
           </Card>
@@ -284,7 +292,7 @@ export default function LeaderboardPage() {
                 {displayLeaderboard[0]?.total_points.toLocaleString()}
               </p>
               <p className="text-sm text-muted-foreground">
-                {displayLeaderboard[0]?.accuracy}% accuracy
+                {formatAccuracy(displayLeaderboard[0]?.accuracy)}% accuracy
               </p>
             </CardContent>
           </Card>
@@ -305,7 +313,7 @@ export default function LeaderboardPage() {
                 {displayLeaderboard[2]?.total_points.toLocaleString()}
               </p>
               <p className="text-sm text-muted-foreground">
-                {displayLeaderboard[2]?.accuracy}% accuracy
+                {formatAccuracy(displayLeaderboard[2]?.accuracy)}% accuracy
               </p>
             </CardContent>
           </Card>
@@ -367,7 +375,7 @@ export default function LeaderboardPage() {
                         {entry.total_points.toLocaleString()}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {entry.accuracy}% accuracy
+                        {formatAccuracy(entry.accuracy)}% accuracy
                       </p>
                     </div>
                   </div>

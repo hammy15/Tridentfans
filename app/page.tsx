@@ -256,7 +256,7 @@ export default function HomePage() {
                                 {entry.user?.display_name || entry.user?.username || `Fan ${entry.user_id.slice(-4)}`}
                               </div>
                               <div className="text-xs text-muted-foreground">
-                                {entry.total_points} points • {(entry.accuracy * 100).toFixed(1)}% accuracy
+                                {entry.total_points} points • {((entry.accuracy || 0) * 100).toFixed(1)}% accuracy
                               </div>
                             </div>
                           </div>

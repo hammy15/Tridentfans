@@ -365,7 +365,7 @@ export default function PredictionsPageV2() {
                           {getSubscriptionBadge(entry.subscription_tier)}
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          {entry.accuracy_percentage.toFixed(1)}% accuracy
+                          {(entry.accuracy_percentage || 0).toFixed(1)}% accuracy
                         </p>
                       </div>
                     </div>

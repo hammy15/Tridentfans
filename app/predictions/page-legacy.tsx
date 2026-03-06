@@ -735,7 +735,7 @@ export default function PredictionsPage() {
                       </div>
                       <div>
                         <p className="font-medium">{entry.username}</p>
-                        <p className="text-sm text-muted-foreground">{entry.accuracy}% accuracy</p>
+                        <p className="text-sm text-muted-foreground">{entry.accuracy || 0}% accuracy</p>
                       </div>
                     </div>
                     <div className="text-right">
