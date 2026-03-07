@@ -96,21 +96,24 @@ export async function POST(request: NextRequest) {
 // Handle Stripe webhooks for subscription events
 export async function handleStripeWebhook(event: Stripe.Event) {
   switch (event.type) {
-    case 'checkout.session.completed':
+    case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session;
       await handleSuccessfulPayment(session);
       break;
+    }
 
-    case 'invoice.payment_succeeded':
+    case 'invoice.payment_succeeded': {
       const invoice = event.data.object as Stripe.Invoice;
       await handleSuccessfulPayment(invoice);
       break;
+    }
 
     case 'customer.subscription.updated':
-    case 'customer.subscription.deleted':
+    case 'customer.subscription.deleted': {
       const subscription = event.data.object as Stripe.Subscription;
       await handleSubscriptionChange(subscription);
       break;
+    }
 
     default:
       console.log(`Unhandled event type: ${event.type}`);

@@ -33,7 +33,7 @@ export function NewsletterSignup() {
         return;
       }
 
-      toast.success("Welcome to Mark's Mariners Digest! First edition coming Sunday.");
+      toast.success("Welcome to Mark&apos;s Mariners Digest! First edition coming Sunday.");
       setEmail('');
       
       // Track conversion for analytics
@@ -61,7 +61,7 @@ export function NewsletterSignup() {
       
       <p className="text-teal-100 mb-4 text-sm">
         Scoops, standings, prediction leaders, hot takes — one email, every Sunday.
-        The week's best Mariners analysis delivered straight to your inbox.
+        The week&apos;s best Mariners analysis delivered straight to your inbox.
       </p>
 
       <form onSubmit={handleSubmit} className="flex gap-2">

@@ -62,7 +62,7 @@ export function DraftKingsPromo() {
       <CardContent>
         <p className="text-sm text-gray-600 mb-4">
           Bet on the Mariners with up to $1,000 in bonus bets for new users. 
-          Get started with America's #1 sportsbook.
+          Get started with America&apos;s #1 sportsbook.
         </p>
         <AffiliateLink 
           partner="draftkings" 
@@ -123,7 +123,7 @@ export function MLBShopGear() {
       </CardHeader>
       <CardContent>
         <p className="text-sm text-gray-600 mb-4">
-          Rep the M's with official jerseys, hats, and gear from MLB Shop. 
+          Rep the M&apos;s with official jerseys, hats, and gear from MLB Shop. 
           New designs and exclusive items for the 2026 season.
         </p>
         <AffiliateLink 

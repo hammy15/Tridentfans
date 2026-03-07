@@ -71,7 +71,7 @@ export function PremiumUpgrade({ className = '', size = 'full' }: PremiumUpgrade
         </CardHeader>
         <CardContent>
           <p className="text-sm text-gray-600">
-            You're helping build the ultimate Mariners community. Enjoy exclusive features and early access to Mark's analysis!
+            You&apos;re helping build the ultimate Mariners community. Enjoy exclusive features and early access to Mark&apos;s analysis!
           </p>
         </CardContent>
       </Card>
