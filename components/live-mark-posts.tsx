@@ -19,10 +19,11 @@ export function LiveMarkPosts() {
   const [posts, setPosts] = useState<LivePost[]>([]);
 
   useEffect(() => {
-    // Load Mark's live posts
+    // Load Mark's live posts - URGENT CRAWFORD RETURN NEWS FIRST
     const loadPosts = async () => {
       try {
-        const [spotlightRes, replyRes, breakingNewsRes, pregameRes] = await Promise.all([
+        const [urgentCrawfordRes, spotlightRes, replyRes, breakingNewsRes, pregameRes] = await Promise.all([
+          fetch('/live-content/crawford-breaking-news-urgent.json'),
           fetch('/live-posts/julio-spotlight.json'),
           fetch('/live-posts/spring-reply.json'),
           fetch('/live-posts/crawford-breaking-news.json'),
@@ -31,7 +32,21 @@ export function LiveMarkPosts() {
 
         const posts: LivePost[] = [];
         
-        // Add breaking news first (most recent)
+        // Add URGENT breaking news first (Crawford return - GAME DAY)
+        if (urgentCrawfordRes.ok) {
+          const urgentPost = await urgentCrawfordRes.json();
+          posts.push({
+            id: urgentPost.id,
+            timestamp: urgentPost.timestamp,
+            author: urgentPost.author,
+            title: urgentPost.title,
+            content: urgentPost.content,
+            category: urgentPost.category,
+            priority: urgentPost.priority
+          });
+        }
+        
+        // Add other breaking news
         if (breakingNewsRes.ok) {
           posts.push(await breakingNewsRes.json());
         }
@@ -72,7 +87,9 @@ export function LiveMarkPosts() {
       
       {posts.map((post) => (
         <Card key={post.id} className={`${
-          post.title?.includes('BREAKING') 
+          post.priority === 'URGENT' || post.title?.includes('Crawford Returns')
+            ? 'border-red-500 bg-gradient-to-r from-red-100 to-orange-100 ring-2 ring-red-300 animate-pulse shadow-lg' 
+            : post.title?.includes('BREAKING') 
             ? 'border-red-300 bg-gradient-to-r from-red-50 to-orange-50 animate-pulse' 
             : post.title?.includes('GAME THREAD')
             ? 'border-green-300 bg-gradient-to-r from-green-50 to-emerald-50'
