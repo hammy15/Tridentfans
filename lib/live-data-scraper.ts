@@ -131,7 +131,7 @@ export async function getLiveGameData(): Promise<EnhancedGameData | null> {
     const formattedGame = formatGameForDisplay(todaysGame);
     
     // Enhance with ESPN data if game is live
-    let enhancedData: EnhancedGameData = {
+    const enhancedData: EnhancedGameData = {
       id: formattedGame.gamePk.toString(),
       date: formattedGame.date.toISOString(),
       opponent: formattedGame.opponent,

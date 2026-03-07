@@ -373,7 +373,7 @@ export function ComprehensivePredictions({ game }: ComprehensivePredictionsProps
           {/* Reasoning */}
           {markPred?.reasoning && (
             <div className="bg-muted/30 p-3 rounded-lg text-sm">
-              <p className="font-medium text-mariners-teal mb-1">⚓ Mark's take:</p>
+              <p className="font-medium text-mariners-teal mb-1">⚓ Mark&apos;s take:</p>
               <p className="text-muted-foreground">{markPred.reasoning}</p>
             </div>
           )}

@@ -175,7 +175,7 @@ export default function PredictionsPageV2() {
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
           The ultimate Mariners prediction experience. Compete against Mark, Hammy, and Spartan 
-          across 15+ categories per game. Earn points, climb leaderboards, and prove you know the M's better than anyone.
+          across 15+ categories per game. Earn points, climb leaderboards, and prove you know the M&apos;s better than anyone.
         </p>
         
         {/* Feature highlights */}

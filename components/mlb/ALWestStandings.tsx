@@ -64,13 +64,13 @@ export function ALWestStandings() {
 
   // For spring training, show current Spring Training standings
   if (standings.length === 0) {
-    // Current Spring Training standings as of March 6, 2026
+    // Current Spring Training standings as of March 7, 2026
     const springStandings = [
-      { team: { id: 117, name: 'Houston Astros' }, rank: 1, wins: 9, losses: 2, pct: .818, gb: '-' },
-      { team: { id: 108, name: 'Los Angeles Angels' }, rank: 2, wins: 8, losses: 4, pct: .667, gb: '1.5' },
-      { team: { id: 140, name: 'Texas Rangers' }, rank: 3, wins: 8, losses: 5, pct: .615, gb: '2' },
-      { team: { id: 133, name: 'Oakland Athletics' }, rank: 4, wins: 4, losses: 7, pct: .364, gb: '4.5' },
-      { team: { id: 136, name: 'Seattle Mariners' }, rank: 5, wins: 3, losses: 9, pct: .250, gb: '6.5' },
+      { team: { id: 117, name: 'Houston Astros' }, rank: 1, wins: 9, losses: 3, pct: .750, gb: '-' },
+      { team: { id: 108, name: 'Los Angeles Angels' }, rank: 2, wins: 8, losses: 5, pct: .615, gb: '1.5' },
+      { team: { id: 140, name: 'Texas Rangers' }, rank: 3, wins: 8, losses: 6, pct: .571, gb: '2' },
+      { team: { id: 133, name: 'Oakland Athletics' }, rank: 4, wins: 5, losses: 8, pct: .385, gb: '4.5' },
+      { team: { id: 136, name: 'Seattle Mariners' }, rank: 5, wins: 4, losses: 9, pct: .308, gb: '5.5' },
     ];
 
     return (
