@@ -28,6 +28,7 @@ import { SpreadTheWord } from '@/components/marketing/SpreadTheWord';
 import { EmailSignup } from '@/components/email/EmailSignup';
 import { ReferralCard } from '@/components/referral/ReferralCard';
 import { OpeningDayCountdown } from '@/components/countdown/OpeningDayCountdown';
+import { LiveMarkPosts } from '@/components/live-mark-posts';
 import { HotTopics } from '@/components/spring-training/HotTopics';
 import { SpringPredictionMarkets } from '@/components/predictions/SpringPredictionMarkets';
 
@@ -226,6 +227,9 @@ export default function HomePage() {
             <div className="space-y-6">
               {/* AL West Standings */}
               <ALWestStandings />
+
+              {/* Live Mark Posts */}
+              <LiveMarkPosts />
 
               {/* Auto-Updating News */}
               <AutoNewsWidget />
