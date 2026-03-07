@@ -1,7 +1,10 @@
 {
-  "last_updated": "2026-03-07T18:00:09.543Z",
-  "new_posts": 2,
-  "latest_post": "Saturday Player Spotlight: Julio Rodríguez - The 2026 Renaissance",
+  "last_updated": "2026-03-07T18:05:05.789Z",
+  "breaking_news": true,
+  "game_day": true,
+  "crawford_returns": true,
+  "posts_today": 4,
   "mark_active": true,
-  "deployment_status": "LIVE"
+  "next_game": "12:10 PM PST vs White Sox",
+  "deployment_method": "Admin Portal Access"
 }

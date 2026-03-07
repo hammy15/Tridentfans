@@ -22,12 +22,24 @@ export function LiveMarkPosts() {
     // Load Mark's live posts
     const loadPosts = async () => {
       try {
-        const [spotlightRes, replyRes] = await Promise.all([
+        const [spotlightRes, replyRes, breakingNewsRes, pregameRes] = await Promise.all([
           fetch('/live-posts/julio-spotlight.json'),
-          fetch('/live-posts/spring-reply.json')
+          fetch('/live-posts/spring-reply.json'),
+          fetch('/live-posts/crawford-breaking-news.json'),
+          fetch('/live-posts/pregame-thread-march-8.json')
         ]);
 
         const posts: LivePost[] = [];
+        
+        // Add breaking news first (most recent)
+        if (breakingNewsRes.ok) {
+          posts.push(await breakingNewsRes.json());
+        }
+        
+        // Add pregame thread
+        if (pregameRes.ok) {
+          posts.push(await pregameRes.json());
+        }
         
         if (spotlightRes.ok) {
           posts.push(await spotlightRes.json());
@@ -59,7 +71,13 @@ export function LiveMarkPosts() {
       </div>
       
       {posts.map((post) => (
-        <Card key={post.id} className="border-teal-200 bg-gradient-to-r from-teal-50 to-blue-50">
+        <Card key={post.id} className={`${
+          post.title?.includes('BREAKING') 
+            ? 'border-red-300 bg-gradient-to-r from-red-50 to-orange-50 animate-pulse' 
+            : post.title?.includes('GAME THREAD')
+            ? 'border-green-300 bg-gradient-to-r from-green-50 to-emerald-50'
+            : 'border-teal-200 bg-gradient-to-r from-teal-50 to-blue-50'
+        }`}
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -78,7 +96,27 @@ export function LiveMarkPosts() {
             </div>
             
             {post.title && (
-              <CardTitle className="text-xl text-teal-700">{post.title}</CardTitle>
+              <CardTitle className={`text-xl ${
+                post.title.includes('BREAKING') 
+                  ? 'text-red-700 font-bold' 
+                  : post.title.includes('GAME THREAD')
+                  ? 'text-green-700 font-bold'
+                  : 'text-teal-700'
+              }`}>
+                {post.title.includes('BREAKING') && (
+                  <span className="inline-flex items-center gap-1 mr-2">
+                    🚨
+                    <Badge className="bg-red-600 text-white animate-pulse">BREAKING</Badge>
+                  </span>
+                )}
+                {post.title.includes('GAME THREAD') && (
+                  <span className="inline-flex items-center gap-1 mr-2">
+                    ⚾
+                    <Badge className="bg-green-600 text-white">LIVE</Badge>
+                  </span>
+                )}
+                {post.title}
+              </CardTitle>
             )}
             
             {post.parent_post && (
