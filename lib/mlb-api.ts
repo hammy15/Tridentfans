@@ -114,13 +114,16 @@ export async function getALWestStandings(): Promise<Standing[]> {
   }
 }
 
-// Team logos mapping
+// Team logos mapping with proper trident logo for Mariners
 export const TEAM_LOGOS = {
-  136: '/team-logos/mariners.svg', // Mariners
+  136: '/team-logos/mariners-trident.svg', // Mariners - TRIDENT LOGO!
   108: '/team-logos/angels.svg',   // Angels
   117: '/team-logos/astros.svg',   // Astros
   140: '/team-logos/rangers.svg',  // Rangers
   133: '/team-logos/athletics.svg', // Athletics
+  145: '/team-logos/white-sox.svg', // White Sox
+  158: '/team-logos/brewers.svg',   // Brewers  
+  109: '/team-logos/diamondbacks.svg', // Diamondbacks
   // Add more teams as needed
 };
 
