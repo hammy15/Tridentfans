@@ -10,6 +10,7 @@ export function TeamLogo({ team, size = 40, className = '' }: TeamLogoProps) {
     
     switch (normalizedTeam) {
       case 'seattle-mariners':
+      case 'seattle':
       case 'mariners':
         return (
           <svg width={size} height={size} viewBox="0 0 40 40" fill="none" className={className}>

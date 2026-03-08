@@ -94,7 +94,7 @@ export function LiveMarkPosts() {
             : post.title?.includes('GAME THREAD')
             ? 'border-green-300 bg-gradient-to-r from-green-50 to-emerald-50'
             : 'border-teal-200 bg-gradient-to-r from-teal-50 to-blue-50'
-        }`}
+        }`}>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">

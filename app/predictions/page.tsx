@@ -80,6 +80,7 @@ export default function PredictionsPageV2() {
     
     switch (teamName.toLowerCase()) {
       case 'seattle mariners':
+      case 'seattle':
       case 'mariners':
         return (
           <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
